@@ -1,39 +1,12 @@
 #include <jni.h>
-#include <string>
-#include "android/log.h"
 
 extern "C"
-{
-   #include <libavformat/avformat.h>
-}
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1prepared(JNIEnv *env, jobject instance,
+                                                              jstring source_) {
+    const char *source = env->GetStringUTFChars(source_, 0);
 
-
-#define LOGI(FORMAT,...) __android_log_print(ANDROID_LOG_INFO,"yanxun",FORMAT,##__VA_ARGS__);
-
-
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_yx_yxaudioplayerlib_Demo_testFfmpeg(JNIEnv *env, jobject instance) {
     // TODO
-    av_register_all();
-    AVCodec *c_temp = av_codec_next(NULL);
-    while (c_temp != NULL)
-    {
-        switch (c_temp->type)
-        {
-            case AVMEDIA_TYPE_VIDEO:
-                LOGI("[Video]:%s", c_temp->name);
-                break;
-            case AVMEDIA_TYPE_AUDIO:
-                LOGI("[Audio]:%s", c_temp->name);
-                break;
-            default:
-                LOGI("[Other]:%s", c_temp->name);
-                break;
-        }
-        c_temp = c_temp->next;
-    }
 
-
-
+    env->ReleaseStringUTFChars(source_, source);
 }
