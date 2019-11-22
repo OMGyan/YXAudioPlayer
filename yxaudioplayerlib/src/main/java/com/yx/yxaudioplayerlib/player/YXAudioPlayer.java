@@ -46,7 +46,7 @@ public class YXAudioPlayer {
         this.source = source;
     }
 
-    public void callPrepared(){
+    public void onCallPrepared(){
         if(OnPreparedListener!=null){
             OnPreparedListener.onPrepared();
         }
