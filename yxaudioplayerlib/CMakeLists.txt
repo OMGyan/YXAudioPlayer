@@ -10,7 +10,11 @@ add_library( #生成动态库的名字
              #代表这是动态库
              SHARED
              #动态库所在路径
-             src/main/cpp/native-lib.cpp )
+             src/main/cpp/native-lib.cpp
+             src/main/cpp/YXAudio.cpp
+             src/main/cpp/YXCallJava.cpp
+             src/main/cpp/YXFFmpeg.cpp
+             )
 
 #添加动态库
 add_library( avcodec-57 SHARED IMPORTED)

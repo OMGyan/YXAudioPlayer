@@ -22,7 +22,7 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1prepared(JNIEnv *env, jobje
         yxfFmpeg->prepared();
     }
 
-    //yxCallJava->onCallPrepared(MAIN_THREAD);
+
 
     env->ReleaseStringUTFChars(source_, source);
 }
@@ -39,4 +39,15 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *VM, void *reserved){
         return result;
     }
     return JNI_VERSION_1_4;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1start(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->start();
+    }
+
 }

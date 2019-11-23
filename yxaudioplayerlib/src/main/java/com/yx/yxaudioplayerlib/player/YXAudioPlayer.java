@@ -67,5 +67,21 @@ public class YXAudioPlayer {
 
     }
 
+    public void start(){
+        if(TextUtils.isEmpty(source)){
+            MyLog.d("source can not be empty");
+            return;
+        }
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                n_start();
+            }
+        }).start();
+    }
+
     public native void n_prepared(String source);
+
+    public native void n_start();
 }

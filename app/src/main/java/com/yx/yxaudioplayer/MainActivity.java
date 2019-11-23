@@ -6,6 +6,8 @@ import android.view.View;
 
 
 import com.yx.yxaudioplayerlib.Demo;
+import com.yx.yxaudioplayerlib.listener.yxOnPreparedListener;
+import com.yx.yxaudioplayerlib.log.MyLog;
 import com.yx.yxaudioplayerlib.player.YXAudioPlayer;
 
 public class MainActivity extends AppCompatActivity {
@@ -20,6 +22,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         player = YXAudioPlayer.getDefault();
+        player.setOnPreparedListener(new yxOnPreparedListener() {
+            @Override
+            public void onPrepared() {
+                MyLog.d("onPrepared");
+                player.start();
+            }
+        });
+
 
     }
 

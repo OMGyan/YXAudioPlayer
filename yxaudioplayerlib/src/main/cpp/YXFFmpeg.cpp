@@ -43,6 +43,81 @@ void YXFFmpeg::decodeFFmpegThread() {
    }
    //循环获取音频流
     for (int i = 0; i < pFormatCtx->nb_streams; i++) {
-        
-    } 
+        if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
+              if(yxAudio==NULL){
+                  yxAudio = new YXAudio();
+                  yxAudio->streamIndex = i;
+                  yxAudio->codecpar = pFormatCtx->streams[i]->codecpar;
+              }
+        }
+    }
+    //获取解码器
+    AVCodec *dec = avcodec_find_decoder(yxAudio->codecpar->codec_id);
+    if(!dec){
+        if(LOG_DEBUG){
+            LOGE("can not find decoder");
+        }
+        return;
+    }
+    //利用解码器创建解码器上下文
+    yxAudio->avCodecContext = avcodec_alloc_context3(dec);
+    if(!yxAudio->avCodecContext){
+        if(LOG_DEBUG){
+            LOGE("can not alloc new decoderctx");
+        }
+        return;
+    }
+
+    if(avcodec_parameters_to_context(yxAudio->avCodecContext,yxAudio->codecpar)<0){
+        if(LOG_DEBUG){
+            LOGE("can not fill decoderctx");
+        }
+        return;
+    }
+    //打开解码器
+    if(avcodec_open2(yxAudio->avCodecContext,dec,0)!=0){
+        if(LOG_DEBUG){
+            LOGE("can not open audio streams");
+        }
+        return;
+    }
+    yxCallJava->onCallPrepared(CHILD_THREAD);
+}
+
+void YXFFmpeg::start() {
+
+    if(yxAudio==NULL){
+        if(LOG_DEBUG){
+            LOGE("yxaudio is null");
+        }
+        return;
+    }
+
+    int count = 0;
+    while(1){
+        //读取音频帧
+        AVPacket *packet = av_packet_alloc();
+        if(av_read_frame(pFormatCtx,packet)==0){
+            if(packet->stream_index == yxAudio->streamIndex){
+                count++;
+                if(LOG_DEBUG){
+                    LOGE("解码第 %d 帧",count)
+                }
+                av_packet_free(&packet);
+                av_free(packet);
+                packet = NULL;
+            } else{
+                av_packet_free(&packet);
+                av_free(packet);
+                packet = NULL;
+            }
+        } else{
+           av_packet_free(&packet);
+           av_free(packet);
+           packet = NULL;
+           break;
+        }
+    }
+
+
 }
