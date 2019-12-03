@@ -6,9 +6,10 @@
 #include "YXFFmpeg.h"
 
 
-YXFFmpeg::YXFFmpeg(YXCallJava *ycjava, const char *url) {
+YXFFmpeg::YXFFmpeg(YXCallJava *ycjava, const char *url,YXPlayStatus *status) {
     this->yxCallJava = ycjava;
     this->url=url;
+    this->status = status;
 
 }
 
@@ -45,7 +46,7 @@ void YXFFmpeg::decodeFFmpegThread() {
     for (int i = 0; i < pFormatCtx->nb_streams; i++) {
         if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
               if(yxAudio==NULL){
-                  yxAudio = new YXAudio();
+                  yxAudio = new YXAudio(status,pFormatCtx->streams[i]->codecpar->sample_rate);
                   yxAudio->streamIndex = i;
                   yxAudio->codecpar = pFormatCtx->streams[i]->codecpar;
               }
@@ -92,20 +93,18 @@ void YXFFmpeg::start() {
         }
         return;
     }
-
+    yxAudio->play();
     int count = 0;
-    while(1){
+    while(status!=NULL && !status->exit){
         //读取音频帧
         AVPacket *packet = av_packet_alloc();
         if(av_read_frame(pFormatCtx,packet)==0){
             if(packet->stream_index == yxAudio->streamIndex){
                 count++;
                 if(LOG_DEBUG){
-                    LOGE("解码第 %d 帧",count)
+                    LOGE("解码第 %d 帧",count);
                 }
-                av_packet_free(&packet);
-                av_free(packet);
-                packet = NULL;
+                yxAudio->yxQueue->putAvpacket(packet);
             } else{
                 av_packet_free(&packet);
                 av_free(packet);
@@ -115,9 +114,19 @@ void YXFFmpeg::start() {
            av_packet_free(&packet);
            av_free(packet);
            packet = NULL;
-           break;
+           while(status!=NULL && !status->exit){
+                if(yxAudio->yxQueue->getQueueSize() > 0){
+                    continue;
+                } else{
+                    status->exit = true;
+                    break;
+                }
+           }
         }
     }
-
-
+    if(LOG_DEBUG){
+        LOGD("解码完成");
+    }
 }
+
+

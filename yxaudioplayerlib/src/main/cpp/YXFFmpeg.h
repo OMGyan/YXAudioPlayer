@@ -23,14 +23,15 @@ public:
     pthread_t decodeThread;
     AVFormatContext *pFormatCtx = NULL;
     YXAudio *yxAudio = NULL;
-
+    YXPlayStatus *status;
 
 public:
-    YXFFmpeg(YXCallJava *ycjava, const char *url);
+    YXFFmpeg(YXCallJava *ycjava, const char *url,YXPlayStatus *status);
     ~YXFFmpeg();
     void prepared();
     void decodeFFmpegThread();
     void start();
+
 };
 
 

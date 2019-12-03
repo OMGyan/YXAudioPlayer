@@ -14,6 +14,8 @@ add_library( #生成动态库的名字
              src/main/cpp/YXAudio.cpp
              src/main/cpp/YXCallJava.cpp
              src/main/cpp/YXFFmpeg.cpp
+             src/main/cpp/YXPlayStatus.cpp
+             src/main/cpp/YXQueue.cpp
              )
 
 #添加动态库
@@ -75,4 +77,5 @@ target_link_libraries( #Specifies the target library.
                        postproc-54
                        swresample-2
                        swscale-4
+                       OpenSLES
                        log )

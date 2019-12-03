@@ -24,8 +24,6 @@ public class YXAudioPlayer {
         System.loadLibrary("avdevice-57");
     }
 
-
-
     private YXAudioPlayer(){}
 
     private static class SingleClass{
@@ -57,14 +55,12 @@ public class YXAudioPlayer {
            MyLog.d("source can not be empty");
            return;
        }
-
        new Thread(new Runnable() {
            @Override
            public void run() {
               n_prepared(source);
            }
        }).start();
-
     }
 
     public void start(){
@@ -72,7 +68,6 @@ public class YXAudioPlayer {
             MyLog.d("source can not be empty");
             return;
         }
-
         new Thread(new Runnable() {
             @Override
             public void run() {

@@ -6,6 +6,7 @@
 JavaVM *jvm;
 YXCallJava *yxCallJava;
 YXFFmpeg *yxfFmpeg;
+YXPlayStatus *yxPlayStatus;
 
 
 extern "C"
@@ -18,7 +19,8 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1prepared(JNIEnv *env, jobje
         if(yxCallJava==NULL){
             yxCallJava = new YXCallJava(jvm,env,instance);
         }
-        yxfFmpeg = new YXFFmpeg(yxCallJava,source);
+        yxPlayStatus = new YXPlayStatus();
+        yxfFmpeg = new YXFFmpeg(yxCallJava,source,yxPlayStatus);
         yxfFmpeg->prepared();
     }
 
