@@ -7,6 +7,7 @@
 
 #include "YXQueue.h"
 #include "YXPlayStatus.h"
+#include "YXCallJava.h"
 
 
 extern "C"{
@@ -28,6 +29,7 @@ public:
     AVCodecContext *avCodecContext = NULL;
     YXQueue *yxQueue;
     YXPlayStatus *yxPlayStatus;
+    YXCallJava *yxCallJava;
     pthread_t thread_play;
     AVPacket *avPacket = NULL;
     AVFrame *avFrame = NULL;
@@ -35,6 +37,12 @@ public:
     uint8_t *buffer = NULL;
     int data_size = 0;
     int sample_rate = 0;
+
+    int duration = 0;
+    AVRational time_base;
+    double now_time = 0;
+    double clock = 0;
+    double last_time = 0;
 
     //引擎接口
     SLObjectItf engineObject = NULL;
@@ -50,13 +58,17 @@ public:
     SLAndroidSimpleBufferQueueItf pcmBufferQueue;
 
 public:
-    YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate);
+    YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate,YXCallJava *yxcj);
     ~YXAudio();
 
     void play();
     int reSampleAudio();
     void initOpenSLES();
     int getCurrentSampleRateForOpensles(int sample_rate);
+    void pause();
+    void resume();
+    void stop();
+    void release();
 };
 
 

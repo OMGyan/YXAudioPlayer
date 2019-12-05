@@ -4,11 +4,12 @@
 
 #include "YXAudio.h"
 
-YXAudio::YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate) {
+YXAudio::YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate,YXCallJava *yxcj) {
    this->yxPlayStatus = yxPlayStatus;
     yxQueue = new YXQueue(yxPlayStatus);
-    buffer = static_cast<uint8_t *>(av_malloc(44100 * 2 * 2));
+    buffer = static_cast<uint8_t *>(av_malloc(sample_rate * 2 * 2));
     this->sample_rate = sample_rate;
+    this->yxCallJava = yxcj;
 }
 
 YXAudio::~YXAudio() {
@@ -17,6 +18,7 @@ YXAudio::~YXAudio() {
 void *decodePlay(void *data){
     YXAudio *yxAudio = static_cast<YXAudio *>(data);
     yxAudio->initOpenSLES();
+
     pthread_exit(&yxAudio->thread_play);
 }
 
@@ -28,6 +30,20 @@ void YXAudio::play() {
 
 int YXAudio::reSampleAudio() {
     while (yxPlayStatus != NULL && !yxPlayStatus->exit){
+
+        if(yxQueue->getQueueSize()==0){
+           if(!yxPlayStatus->load){
+               yxPlayStatus->load = true;
+               yxCallJava->onCallLoad(CHILD_THREAD, true);
+           }
+            continue;
+        } else{
+            if(yxPlayStatus->load){
+                yxPlayStatus->load = false;
+                yxCallJava->onCallLoad(CHILD_THREAD, false);
+            }
+        }
+
         avPacket = av_packet_alloc();
         if(yxQueue->getAvpacket(avPacket)!=0){
             av_packet_free(&avPacket);
@@ -82,11 +98,13 @@ int YXAudio::reSampleAudio() {
 
             int out_channels = av_get_channel_layout_nb_channels(AV_CH_LAYOUT_STEREO);
             data_size = nb * out_channels * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
-
+            now_time = avFrame->pts * av_q2d(time_base);
             //fwrite(buffer,1,data_size,outFile);
-            if(LOG_DEBUG){
-                LOGE("data size is %d",data_size);
+            if(now_time < clock){
+                now_time = clock;
             }
+            clock = now_time;
+
             av_packet_free(&avPacket);
             av_free(avPacket);
             avPacket = NULL;
@@ -114,9 +132,15 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf,void *context){
     YXAudio *yxAudio = (YXAudio *)(context);
     if(yxAudio!=NULL){
         int bufferSize = yxAudio->reSampleAudio();
-
         if(bufferSize > 0){
-            (*yxAudio->pcmBufferQueue)->Enqueue(yxAudio->pcmBufferQueue,yxAudio->buffer,bufferSize);
+            yxAudio->clock += bufferSize/((double)(yxAudio->sample_rate * 2 * 2));
+            if(yxAudio->clock - yxAudio->last_time >= 0.1){
+                yxAudio->last_time = yxAudio->clock;
+                if(!(yxAudio->clock > yxAudio->duration)){
+                    yxAudio->yxCallJava->onCallTimeInfo(CHILD_THREAD,yxAudio->clock,yxAudio->duration);
+                }
+            }
+             (*yxAudio->pcmBufferQueue)->Enqueue(yxAudio->pcmBufferQueue,yxAudio->buffer,bufferSize);
         }
     }
 }
@@ -212,4 +236,61 @@ int YXAudio::getCurrentSampleRateForOpensles(int sample_rate) {
             rate = SL_SAMPLINGRATE_44_1;
     }
     return rate;
+}
+
+void YXAudio::pause() {
+    if(pcmPlayerObject != NULL){
+        (*pclPlayerPlay)->SetPlayState(pclPlayerPlay,SL_PLAYSTATE_PAUSED);
+    }
+}
+
+void YXAudio::resume() {
+    if(pcmPlayerObject != NULL){
+        (*pclPlayerPlay)->SetPlayState(pclPlayerPlay,SL_PLAYSTATE_PLAYING);
+    }
+}
+
+void YXAudio::stop() {
+    if(pcmPlayerObject != NULL){
+        (*pclPlayerPlay)->SetPlayState(pclPlayerPlay,SL_PLAYSTATE_STOPPED);
+    }
+}
+
+void YXAudio::release() {
+    stop();
+    if(yxQueue!=NULL){
+        delete(yxQueue);
+        yxQueue = NULL;
+    }
+    if(pcmPlayerObject!=NULL){
+        (*pcmPlayerObject)->Destroy(pcmPlayerObject);
+        pcmPlayerObject = NULL;
+        pclPlayerPlay = NULL;
+        pcmBufferQueue = NULL;
+    }
+    if(outputMixObject!=NULL){
+        (*outputMixObject)->Destroy(outputMixObject);
+        outputMixObject = NULL;
+        outputMixEnvironmentalReverb = NULL;
+    }
+    if(engineObject!=NULL){
+        (*engineObject)->Destroy(engineObject);
+        engineObject = NULL;
+        engineEngine = NULL;
+    }
+    if(buffer!=NULL){
+        free(buffer);
+        buffer = NULL;
+    }
+    if(avCodecContext!=NULL){
+        avcodec_close(avCodecContext);
+        avcodec_free_context(&avCodecContext);
+        avCodecContext = NULL;
+    }
+    if(yxPlayStatus!=NULL){
+        yxPlayStatus = NULL;
+    }
+    if(yxCallJava!=NULL){
+        yxCallJava = NULL;
+    }
 }

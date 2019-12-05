@@ -7,7 +7,8 @@ JavaVM *jvm;
 YXCallJava *yxCallJava;
 YXFFmpeg *yxfFmpeg;
 YXPlayStatus *yxPlayStatus;
-
+bool nexit = true;
+pthread_t start_thread;
 
 extern "C"
 JNIEXPORT void JNICALL
@@ -19,19 +20,14 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1prepared(JNIEnv *env, jobje
         if(yxCallJava==NULL){
             yxCallJava = new YXCallJava(jvm,env,instance);
         }
+        yxCallJava->onCallLoad(MAIN_THREAD, true);
         yxPlayStatus = new YXPlayStatus();
         yxfFmpeg = new YXFFmpeg(yxCallJava,source,yxPlayStatus);
         yxfFmpeg->prepared();
     }
 
-
-
     env->ReleaseStringUTFChars(source_, source);
 }
-
-
-
-
 
 JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *VM, void *reserved){
     jint result = -1;
@@ -43,13 +39,75 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *VM, void *reserved){
     return JNI_VERSION_1_4;
 }
 
+void *startThreadCallback(void *data){
+    YXFFmpeg *yxfF = static_cast<YXFFmpeg *>(data);
+    yxfF->start();
+    pthread_exit(&start_thread);
+}
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1start(JNIEnv *env, jobject instance) {
 
     // TODO
     if(yxfFmpeg!=NULL){
-        yxfFmpeg->start();
+        pthread_create(&start_thread,NULL,startThreadCallback,yxfFmpeg);
+    }
+
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1pause(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->pause();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1resume(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->resume();
+    }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1stop(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if(!nexit){
+        return;
+    }
+    nexit = false;
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->release();
+        delete(yxfFmpeg);
+        yxfFmpeg = NULL;
+        if(yxCallJava!=NULL){
+            delete(yxCallJava);
+            yxCallJava = NULL;
+        }
+        if(yxPlayStatus!=NULL){
+            delete(yxPlayStatus);
+            yxPlayStatus = NULL;
+        }
+    }
+    nexit = true;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1seek(JNIEnv *env, jobject instance,
+                                                          jint secds) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->seek(secds);
     }
 
 }

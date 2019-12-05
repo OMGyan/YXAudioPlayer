@@ -7,3 +7,7 @@
 YXPlayStatus::YXPlayStatus() {
   exit = false;
 }
+
+YXPlayStatus::~YXPlayStatus() {
+
+}

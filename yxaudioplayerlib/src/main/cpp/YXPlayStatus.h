@@ -10,9 +10,11 @@ class YXPlayStatus {
 
 public:
     bool exit;
-
+    bool load = true;
+    bool seek = false;
 public:
     YXPlayStatus();
+    ~YXPlayStatus();
 };
 
 
