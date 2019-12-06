@@ -30,6 +30,12 @@ public class YXAudioPlayer {
 
     private yxOnCompleteListener onCompleteListener;
 
+    private boolean playNext = false;
+
+    private int duration = -1;
+
+    private int volumePercent = 100;
+
     static {
         System.loadLibrary("native-lib");
         System.loadLibrary("avutil-55");
@@ -119,6 +125,14 @@ public class YXAudioPlayer {
         }
     }
 
+    public void onCallNext(){
+        //如果当前是进入下一曲
+        if(playNext){
+            playNext = !playNext;
+            prepared();
+        }
+    }
+
     public void prepared(){
        if(TextUtils.isEmpty(source)){
            MyLog.d("source can not be empty");
@@ -140,6 +154,7 @@ public class YXAudioPlayer {
         new Thread(new Runnable() {
             @Override
             public void run() {
+                setVolume(volumePercent);
                 n_start();
             }
         }).start();
@@ -160,12 +175,38 @@ public class YXAudioPlayer {
     }
 
     public void stop(){
+        yxTimeInfoBean = null;
+        duration = -1;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 n_stop();
             }
         }).start();
+    }
+
+    public void playNext(String url){
+        source = url;
+        playNext = true;
+        stop();
+    }
+
+    public int getDuration(){
+        if(duration<0){
+            duration = n_duration();
+        }
+        return duration;
+    }
+
+    public void setVolume(int percent){
+        if(percent>=0 && percent<=100){
+            volumePercent = percent;
+            n_volume(percent);
+        }
+    }
+
+    public int getVolumePercent() {
+        return volumePercent;
     }
 
     public void seek(int secds){
@@ -183,4 +224,8 @@ public class YXAudioPlayer {
     private native void n_stop();
 
     private native void n_seek(int secds);
+
+    private native int n_duration();
+
+    private native void n_volume(int percent);
 }

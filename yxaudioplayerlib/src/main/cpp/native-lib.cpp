@@ -84,6 +84,10 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1stop(JNIEnv *env, jobject i
     if(!nexit){
         return;
     }
+
+    jclass jcz = env->GetObjectClass(instance);
+    jmethodID jm_next = env->GetMethodID(jcz,"onCallNext","()V");
+
     nexit = false;
     if(yxfFmpeg!=NULL){
         yxfFmpeg->release();
@@ -99,6 +103,7 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1stop(JNIEnv *env, jobject i
         }
     }
     nexit = true;
+    env->CallVoidMethod(instance,jm_next);
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -110,4 +115,24 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1seek(JNIEnv *env, jobject i
         yxfFmpeg->seek(secds);
     }
 
+}
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1duration(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        return yxfFmpeg->duration;
+    }
+    return 0;
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1volume(JNIEnv *env, jobject instance,
+                                                            jint percent) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->setVolume(percent);
+    }
 }

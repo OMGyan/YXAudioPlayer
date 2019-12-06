@@ -260,4 +260,10 @@ void YXFFmpeg::seek(int64_t secds) {
     }
 }
 
+void YXFFmpeg::setVolume(int percent) {
+    if(yxAudio!=NULL){
+        yxAudio->setVolume(percent);
+    }
+}
+
 

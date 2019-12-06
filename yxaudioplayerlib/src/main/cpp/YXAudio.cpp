@@ -136,9 +136,7 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf,void *context){
             yxAudio->clock += bufferSize/((double)(yxAudio->sample_rate * 2 * 2));
             if(yxAudio->clock - yxAudio->last_time >= 0.1){
                 yxAudio->last_time = yxAudio->clock;
-                if(!(yxAudio->clock > yxAudio->duration)){
-                    yxAudio->yxCallJava->onCallTimeInfo(CHILD_THREAD,yxAudio->clock,yxAudio->duration);
-                }
+                yxAudio->yxCallJava->onCallTimeInfo(CHILD_THREAD,yxAudio->clock,yxAudio->duration);
             }
              (*yxAudio->pcmBufferQueue)->Enqueue(yxAudio->pcmBufferQueue,yxAudio->buffer,bufferSize);
         }
@@ -176,14 +174,16 @@ void YXAudio::initOpenSLES() {
     SLDataSource slDataSource = {&android_queue,&pcm};
     SLDataSink audioSink = {&outputMix,NULL};
 
-    const SLInterfaceID ids[1] = {SL_IID_BUFFERQUEUE};
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
-    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,1,ids,req);
+    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME};
+    const SLboolean req[2] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
+    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,2,ids,req);
     (*pcmPlayerObject)->Realize(pcmPlayerObject,SL_BOOLEAN_FALSE);
+    //得到接口后调用,获取player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_PLAY,&pclPlayerPlay);
-
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_VOLUME,&pcmVolumePlay);
     //设置缓冲队列和回调函数
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_BUFFERQUEUE,&pcmBufferQueue);
+    setVolume(volumePercent);
     (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue,pcmBufferCallBack,this);
     (*pclPlayerPlay)->SetPlayState(pclPlayerPlay,SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue,this);
@@ -292,5 +292,46 @@ void YXAudio::release() {
     }
     if(yxCallJava!=NULL){
         yxCallJava = NULL;
+    }
+}
+
+void YXAudio::setVolume(int percent) {
+    volumePercent = percent;
+    if(pcmVolumePlay!=NULL){
+        if(percent > 30)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -20);
+        }
+        else if(percent > 25)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -22);
+        }
+        else if(percent > 20)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -25);
+        }
+        else if(percent > 15)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -28);
+        }
+        else if(percent > 10)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -30);
+        }
+        else if(percent > 5)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -34);
+        }
+        else if(percent > 3)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -37);
+        }
+        else if(percent > 0)
+        {
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -40);
+        }
+        else{
+            (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -100);
+        }
     }
 }

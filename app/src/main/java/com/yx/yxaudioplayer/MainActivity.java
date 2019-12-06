@@ -8,8 +8,10 @@ import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.AppCompatSeekBar;
+
 import android.view.View;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.yx.yxaudioplayerlib.YXTimeInfoBean;
 import com.yx.yxaudioplayerlib.listener.yxOnCompleteListener;
@@ -20,6 +22,7 @@ import com.yx.yxaudioplayerlib.listener.yxOnPreparedListener;
 import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
 import com.yx.yxaudioplayerlib.log.MyLog;
 import com.yx.yxaudioplayerlib.player.YXAudioPlayer;
+import com.yx.yxaudioplayerlib.util.YXTimeUtil;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -30,26 +33,48 @@ public class MainActivity extends AppCompatActivity {
     //请求状态码
     private static int REQUEST_PERMISSION_CODE = 1;
 
-     private final String AUDIO_SOURCE = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
-   // private final String AUDIO_SOURCE = "http://ngcdn004.cnr.cn/live/dszs/index.m3u8";
+    private final String AUDIO_SOURCE = "http://mpge.5nd.com/2015/2015-11-26/69708/1.mp3";
+    private final String AUDIO_SOURCE_TWO = "http://ngcdn004.cnr.cn/live/dszs/index.m3u8";
 
     private YXAudioPlayer player;
-    private AppCompatSeekBar seekBar;
+    private int position = 0;
+    private boolean isSeek;
+
+
     private Handler mh = new Handler(){
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            seekBar.setProgress(msg.arg1);
+            switch (msg.what){
+                case 1:
+                    if(!isSeek){
+                        YXTimeInfoBean timeInfoBean = (YXTimeInfoBean) msg.obj;
+                        tv_time.setText(YXTimeUtil.secdsToDateFormat(timeInfoBean.getTotalTime(), timeInfoBean.getTotalTime())
+                                + "/" + YXTimeUtil.secdsToDateFormat(timeInfoBean.getCurrentTime(), timeInfoBean.getTotalTime()));
+                        seekBar.setProgress(timeInfoBean.getCurrentTime()*100/timeInfoBean.getTotalTime());
+                    }
+                    break;
+                case 100:
+                    tv_volume.setText("音量 : "+msg.arg1);
+                    break;
+            }
+
         }
     };
+    private TextView tv_time;
+    private SeekBar seekBar;
+    private TextView tv_volume;
+    private SeekBar sb_volume;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        seekBar = ((AppCompatSeekBar) findViewById(R.id.sb));
-
+        tv_time = ((TextView) findViewById(R.id.tv_time));
+        seekBar = ((SeekBar) findViewById(R.id.sb));
+        tv_volume = ((TextView) findViewById(R.id.tv_volume));
+        sb_volume = ((SeekBar) findViewById(R.id.sb_volume));
 
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP){
             if(ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
@@ -58,6 +83,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         player = YXAudioPlayer.getDefault();
+        player.setVolume(50);
+        tv_volume.setText("音量 : "+player.getVolumePercent());
+        sb_volume.setProgress(player.getVolumePercent());
         player.setOnPreparedListener(new yxOnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -91,11 +119,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onTimeInfo(YXTimeInfoBean yxTimeInfoBean) {
                 MyLog.d(yxTimeInfoBean.toString());
-                if(seekBar.getProgress()==0){
-                    seekBar.setMax(yxTimeInfoBean.getTotalTime());
-                }
                 Message message = mh.obtainMessage();
-                message.arg1 = yxTimeInfoBean.getCurrentTime();
+                message.obj = yxTimeInfoBean;
                 message.what = 1;
                 mh.sendMessage(message);
             }
@@ -114,6 +139,46 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if(player.getDuration()>0 && isSeek){
+                    position = player.getDuration()*progress / 100;
+                }
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                  isSeek = true;
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                 player.seek(position);
+                 isSeek = false;
+            }
+        });
+
+        sb_volume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                player.setVolume(progress);
+                Message message = mh.obtainMessage();
+                message.what = 100;
+                message.arg1 = progress;
+                mh.sendMessage(message);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
     }
     public void begin(View view) {
        player.setSource(AUDIO_SOURCE);
@@ -129,10 +194,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void stop(View view) {
+        tv_time.setText("00:00/00:00");
+        seekBar.setProgress(0);
         player.stop();
     }
 
-    public void seek(View view) {
-        player.seek(215);
+    public void next(View view) {
+        player.playNext(AUDIO_SOURCE_TWO);
     }
 }
