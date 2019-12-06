@@ -15,6 +15,11 @@
 #define CAN_NOT_OPEN_AUDIO_STREAMS 1006
 #define YXAUDIO_IS_NULL 1007
 
+#define RIGHT_CHANNEL 0
+#define LEFT_CHANNEL 1
+#define STEREO_CHANNEL 2
+
+
 #include "jni.h"
 
 class YXCallJava {

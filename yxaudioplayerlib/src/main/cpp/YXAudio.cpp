@@ -174,13 +174,15 @@ void YXAudio::initOpenSLES() {
     SLDataSource slDataSource = {&android_queue,&pcm};
     SLDataSink audioSink = {&outputMix,NULL};
 
-    const SLInterfaceID ids[2] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME};
-    const SLboolean req[2] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
-    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,2,ids,req);
+    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME,SL_IID_MUTESOLO};
+    const SLboolean req[3] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
+    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,3,ids,req);
     (*pcmPlayerObject)->Realize(pcmPlayerObject,SL_BOOLEAN_FALSE);
     //得到接口后调用,获取player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_PLAY,&pclPlayerPlay);
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_VOLUME,&pcmVolumePlay);
+    //获取声道接口
+    (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_MUTESOLO,&pcmMutePlay);
     //设置缓冲队列和回调函数
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_BUFFERQUEUE,&pcmBufferQueue);
     setVolume(volumePercent);
@@ -334,4 +336,23 @@ void YXAudio::setVolume(int percent) {
             (*pcmVolumePlay)->SetVolumeLevel(pcmVolumePlay, (100 - percent) * -100);
         }
     }
+}
+
+void YXAudio::setMute(int mute) {
+   if(pcmMutePlay!=NULL){
+       switch (mute){
+           case RIGHT_CHANNEL:
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,1, false);
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,0, true);
+               break;
+           case LEFT_CHANNEL:
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,1, true);
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,0, false);
+               break;
+           case STEREO_CHANNEL:
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,1, false);
+               (*pcmMutePlay)->SetChannelMute(pcmMutePlay,0, false);
+               break;
+       }
+   }
 }

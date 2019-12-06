@@ -70,12 +70,44 @@
         android:textColor="#222222"
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="10dp"
-        android:text="音量 : 100"
+        android:text="音量 : 0"
         />
-    <SeekBar
-        android:layout_width="match_parent"
-        android:id="@+id/sb_volume"
-        android:layout_height="wrap_content" />
 
+    <SeekBar
+        android:id="@+id/sb_volume"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp" />
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        >
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="leftChannel"
+            android:text="左声道"
+            />
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="stereoChannel"
+            android:text="立体声"
+            />
+
+
+        <Button
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:onClick="rightChannel"
+            android:text="右声道"
+            />
+
+
+    </LinearLayout>
 
 </LinearLayout>

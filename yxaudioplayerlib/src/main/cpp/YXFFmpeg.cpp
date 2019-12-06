@@ -266,4 +266,10 @@ void YXFFmpeg::setVolume(int percent) {
     }
 }
 
+void YXFFmpeg::setMute(int mute) {
+    if(yxAudio!=NULL){
+        yxAudio->setMute(mute);
+    }
+}
+
 

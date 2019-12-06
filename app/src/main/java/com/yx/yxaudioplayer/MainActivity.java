@@ -83,9 +83,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         player = YXAudioPlayer.getDefault();
-        player.setVolume(50);
-        tv_volume.setText("音量 : "+player.getVolumePercent());
-        sb_volume.setProgress(player.getVolumePercent());
+       // player.setVolume(50);
+      //  tv_volume.setText("音量 : "+player.getVolumePercent());
+      //  sb_volume.setProgress(player.getVolumePercent());
         player.setOnPreparedListener(new yxOnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -201,5 +201,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void next(View view) {
         player.playNext(AUDIO_SOURCE_TWO);
+    }
+
+    public void leftChannel(View view) {
+    }
+
+    public void stereoChannel(View view) {
+    }
+
+    public void rightChannel(View view) {
     }
 }
