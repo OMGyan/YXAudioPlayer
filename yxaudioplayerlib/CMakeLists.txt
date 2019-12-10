@@ -3,6 +3,8 @@ cmake_minimum_required(VERSION 3.4.1)
 
 #导入include路径
 include_directories(src/main/cpp/include)
+include_directories(src/main/cpp/soundtouch/include)
+include_directories(src/main/cpp/soundtouch/sources)
 
 #该函数为根据这个路径下的cpp文件生成一个叫native-lib的动态库
 add_library( #生成动态库的名字
@@ -16,6 +18,19 @@ add_library( #生成动态库的名字
              src/main/cpp/YXFFmpeg.cpp
              src/main/cpp/YXPlayStatus.cpp
              src/main/cpp/YXQueue.cpp
+
+             src/main/cpp/soundtouch/sources/AAFilter.cpp
+             src/main/cpp/soundtouch/sources/cpu_detect_x86.cpp
+             src/main/cpp/soundtouch/sources/FIFOSampleBuffer.cpp
+             src/main/cpp/soundtouch/sources/FIRFilter.cpp
+             src/main/cpp/soundtouch/sources/InterpolateCubic.cpp
+             src/main/cpp/soundtouch/sources/InterpolateLinear.cpp
+             src/main/cpp/soundtouch/sources/InterpolateShannon.cpp
+             src/main/cpp/soundtouch/sources/PeakFinder.cpp
+             src/main/cpp/soundtouch/sources/RateTransposer.cpp
+             src/main/cpp/soundtouch/sources/SoundTouch.cpp
+             src/main/cpp/soundtouch/sources/sse_optimized.cpp
+             src/main/cpp/soundtouch/sources/TDStretch.cpp
              )
 
 #添加动态库

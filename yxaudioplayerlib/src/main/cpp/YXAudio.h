@@ -8,6 +8,7 @@
 #include "YXQueue.h"
 #include "YXPlayStatus.h"
 #include "YXCallJava.h"
+#include "SoundTouch.h"
 
 
 extern "C"{
@@ -44,6 +45,7 @@ public:
     double clock = 0;
     double last_time = 0;
     int volumePercent = 100;
+    int mute = 2;
 
     //引擎接口
     SLObjectItf engineObject = NULL;

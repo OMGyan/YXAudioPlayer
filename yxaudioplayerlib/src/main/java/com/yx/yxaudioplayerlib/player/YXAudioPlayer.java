@@ -3,6 +3,7 @@ package com.yx.yxaudioplayerlib.player;
 import android.text.TextUtils;
 
 import com.yx.yxaudioplayerlib.YXTimeInfoBean;
+import com.yx.yxaudioplayerlib.enums.ChannelEnum;
 import com.yx.yxaudioplayerlib.listener.yxOnCompleteListener;
 import com.yx.yxaudioplayerlib.listener.yxOnErrorListener;
 import com.yx.yxaudioplayerlib.listener.yxOnLoadListener;
@@ -35,6 +36,9 @@ public class YXAudioPlayer {
     private int duration = -1;
 
     private int volumePercent = 100;
+
+    //初始化声道
+    private ChannelEnum ce = ChannelEnum.CHANNEL_LEFT;
 
     static {
         System.loadLibrary("native-lib");
@@ -155,6 +159,7 @@ public class YXAudioPlayer {
             @Override
             public void run() {
                 setVolume(volumePercent);
+                setMute(ce);
                 n_start();
             }
         }).start();
@@ -205,6 +210,11 @@ public class YXAudioPlayer {
         }
     }
 
+    public void setMute(ChannelEnum channelEnum){
+        ce = channelEnum;
+        n_mute(channelEnum.getValue());
+    }
+
     public int getVolumePercent() {
         return volumePercent;
     }
@@ -228,4 +238,6 @@ public class YXAudioPlayer {
     private native int n_duration();
 
     private native void n_volume(int percent);
+
+    private native void n_mute(int mute);
 }

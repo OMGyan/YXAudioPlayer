@@ -186,6 +186,7 @@ void YXAudio::initOpenSLES() {
     //设置缓冲队列和回调函数
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_BUFFERQUEUE,&pcmBufferQueue);
     setVolume(volumePercent);
+    setMute(mute);
     (*pcmBufferQueue)->RegisterCallback(pcmBufferQueue,pcmBufferCallBack,this);
     (*pclPlayerPlay)->SetPlayState(pclPlayerPlay,SL_PLAYSTATE_PLAYING);
     pcmBufferCallBack(pcmBufferQueue,this);
@@ -339,6 +340,7 @@ void YXAudio::setVolume(int percent) {
 }
 
 void YXAudio::setMute(int mute) {
+    this->mute = mute;
    if(pcmMutePlay!=NULL){
        switch (mute){
            case RIGHT_CHANNEL:

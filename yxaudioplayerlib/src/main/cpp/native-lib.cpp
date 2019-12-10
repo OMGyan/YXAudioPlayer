@@ -136,3 +136,14 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1volume(JNIEnv *env, jobject
         yxfFmpeg->setVolume(percent);
     }
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1mute(JNIEnv *env, jobject instance,
+                                                          jint mute) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->setMute(mute);
+    }
+
+}

@@ -14,6 +14,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.yx.yxaudioplayerlib.YXTimeInfoBean;
+import com.yx.yxaudioplayerlib.enums.ChannelEnum;
 import com.yx.yxaudioplayerlib.listener.yxOnCompleteListener;
 import com.yx.yxaudioplayerlib.listener.yxOnErrorListener;
 import com.yx.yxaudioplayerlib.listener.yxOnLoadListener;
@@ -23,6 +24,8 @@ import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
 import com.yx.yxaudioplayerlib.log.MyLog;
 import com.yx.yxaudioplayerlib.player.YXAudioPlayer;
 import com.yx.yxaudioplayerlib.util.YXTimeUtil;
+
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -83,9 +86,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         player = YXAudioPlayer.getDefault();
-       // player.setVolume(50);
-      //  tv_volume.setText("音量 : "+player.getVolumePercent());
-      //  sb_volume.setProgress(player.getVolumePercent());
+        player.setVolume(80);
+        tv_volume.setText("音量 : "+player.getVolumePercent());
+        sb_volume.setProgress(player.getVolumePercent());
+        player.setMute(ChannelEnum.CHANNEL_STEREO);
         player.setOnPreparedListener(new yxOnPreparedListener() {
             @Override
             public void onPrepared() {
@@ -204,11 +208,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void leftChannel(View view) {
+        player.setMute(ChannelEnum.CHANNEL_LEFT);
     }
 
     public void stereoChannel(View view) {
+        player.setMute(ChannelEnum.CHANNEL_STEREO);
     }
 
     public void rightChannel(View view) {
+        player.setMute(ChannelEnum.CHANNEL_RIGHT);
     }
 }
