@@ -171,6 +171,7 @@ void YXFFmpeg::start() {
                     break;
                 }
            }
+            break;
         }
     }
     if(yxCallJava!=NULL){
@@ -269,6 +270,19 @@ void YXFFmpeg::setVolume(int percent) {
 void YXFFmpeg::setMute(int mute) {
     if(yxAudio!=NULL){
         yxAudio->setMute(mute);
+    }
+}
+
+void YXFFmpeg::setPitch(float pitch) {
+    if(yxAudio!=NULL){
+        yxAudio->setPitch(pitch);
+    }
+
+}
+
+void YXFFmpeg::setSpeed(float speed) {
+    if(yxAudio!=NULL){
+        yxAudio->setSpeed(speed);
     }
 }
 

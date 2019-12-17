@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         player = YXAudioPlayer.getDefault();
-        player.setVolume(80);
+        player.setVolume(60);
         tv_volume.setText("音量 : "+player.getVolumePercent());
         sb_volume.setProgress(player.getVolumePercent());
         player.setMute(ChannelEnum.CHANNEL_STEREO);
@@ -122,7 +122,6 @@ public class MainActivity extends AppCompatActivity {
         player.setOnTimeInfoListener(new yxOnTimeInfoListener() {
             @Override
             public void onTimeInfo(YXTimeInfoBean yxTimeInfoBean) {
-                MyLog.d(yxTimeInfoBean.toString());
                 Message message = mh.obtainMessage();
                 message.obj = yxTimeInfoBean;
                 message.what = 1;
@@ -217,5 +216,25 @@ public class MainActivity extends AppCompatActivity {
 
     public void rightChannel(View view) {
         player.setMute(ChannelEnum.CHANNEL_RIGHT);
+    }
+
+    public void speed(View view) {
+        player.setSpeed(1.5f);
+        player.setPitch(1.0f);
+    }
+
+    public void pitch(View view) {
+        player.setPitch(1.5f);
+        player.setSpeed(1.0f);
+    }
+
+    public void speedpitch(View view) {
+        player.setSpeed(1.5f);
+        player.setPitch(1.5f);
+    }
+
+    public void normalspeedpitch(View view) {
+        player.setSpeed(1.0f);
+        player.setPitch(1.0f);
     }
 }

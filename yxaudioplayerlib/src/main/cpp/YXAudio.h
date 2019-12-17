@@ -10,6 +10,8 @@
 #include "YXCallJava.h"
 #include "SoundTouch.h"
 
+using namespace soundtouch;
+
 
 extern "C"{
 #include <libavcodec/avcodec.h>
@@ -47,6 +49,9 @@ public:
     int volumePercent = 100;
     int mute = 2;
 
+    float pitch = 1.0f;
+    float speed = 1.0f;
+
     //引擎接口
     SLObjectItf engineObject = NULL;
     SLEngineItf engineEngine = NULL;
@@ -60,14 +65,23 @@ public:
     SLVolumeItf pcmVolumePlay = NULL;
     SLMuteSoloItf pcmMutePlay = NULL;
     //缓冲器队列接口
-    SLAndroidSimpleBufferQueueItf pcmBufferQueue;
+    SLAndroidSimpleBufferQueueItf pcmBufferQueue = NULL;
+
+    //1.声明SoundTouch对象和内存变量：
+    SoundTouch *soundTouch = NULL;
+    SAMPLETYPE *sampleBuffer = NULL;
+    //处理PCM数据是否完成
+    bool finished = true;
+    uint8_t *out_buffer = NULL;
+    int nb = 0;
+    int num = 0;
 
 public:
     YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate,YXCallJava *yxcj);
     ~YXAudio();
 
     void play();
-    int reSampleAudio();
+    int reSampleAudio(void **pcmbuf);
     void initOpenSLES();
     int getCurrentSampleRateForOpensles(int sample_rate);
     void pause();
@@ -76,6 +90,9 @@ public:
     void release();
     void setVolume(int percent);
     void setMute(int mute);
+    int getSoundTouchData();
+    void setPitch(float pitch);
+    void setSpeed(float speed);
 };
 
 

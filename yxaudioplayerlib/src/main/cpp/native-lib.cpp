@@ -147,3 +147,26 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1mute(JNIEnv *env, jobject i
     }
 
 }
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1pitch(JNIEnv *env, jobject instance,
+                                                           jfloat pitch) {
+
+
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->setPitch(pitch);
+    }
+
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1speed(JNIEnv *env, jobject instance,
+                                                           jfloat speed) {
+
+    // TODO
+    if(yxfFmpeg!=NULL){
+        yxfFmpeg->setSpeed(speed);
+    }
+
+}

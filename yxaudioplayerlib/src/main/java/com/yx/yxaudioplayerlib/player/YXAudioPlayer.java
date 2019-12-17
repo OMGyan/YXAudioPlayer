@@ -37,6 +37,9 @@ public class YXAudioPlayer {
 
     private int volumePercent = 100;
 
+    private float speed = 1.0f;
+    private float pitch = 1.0f;
+
     //初始化声道
     private ChannelEnum ce = ChannelEnum.CHANNEL_LEFT;
 
@@ -160,6 +163,8 @@ public class YXAudioPlayer {
             public void run() {
                 setVolume(volumePercent);
                 setMute(ce);
+                setPitch(pitch);
+                setSpeed(speed);
                 n_start();
             }
         }).start();
@@ -223,6 +228,18 @@ public class YXAudioPlayer {
         n_seek(secds);
     }
 
+    public void setPitch(float p)
+    {
+        pitch = p;
+        n_pitch(pitch);
+    }
+
+    public void setSpeed(float s)
+    {
+        speed = s;
+        n_speed(speed);
+    }
+
     private native void n_prepared(String source);
 
     private native void n_start();
@@ -240,4 +257,8 @@ public class YXAudioPlayer {
     private native void n_volume(int percent);
 
     private native void n_mute(int mute);
+
+    private native void n_pitch(float pitch);
+
+    private native void n_speed(float speed);
 }
