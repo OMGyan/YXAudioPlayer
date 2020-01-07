@@ -33,6 +33,8 @@ public:
     jmethodID jm_timeinfo;
     jmethodID jm_error;
     jmethodID jm_complete;
+    jmethodID jm_valuedb;
+    jmethodID jm_pcmtoaac;
 
 public:
     YXCallJava(JavaVM *vm,JNIEnv *jniEnv,jobject job);
@@ -42,6 +44,8 @@ public:
     void onCallTimeInfo(int threadType,int curr,int total);
     void onCallError(int threadType,int code,const char *msg);
     void onCallComplete(int threadType);
+    void onCallValueDB(int threadType,int db);
+    void onCallPcmToAAC(int threadType,int size, void *buffer);
 };
 
 

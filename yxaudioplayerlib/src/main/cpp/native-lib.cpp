@@ -15,7 +15,7 @@ JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1prepared(JNIEnv *env, jobject instance,
                                                               jstring source_) {
     const char *source = env->GetStringUTFChars(source_, 0);
-    // TODO
+
     if(yxfFmpeg==NULL){
         if(yxCallJava==NULL){
             yxCallJava = new YXCallJava(jvm,env,instance);
@@ -49,7 +49,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1start(JNIEnv *env, jobject instance) {
 
-    // TODO
     if(yxfFmpeg!=NULL){
         pthread_create(&start_thread,NULL,startThreadCallback,yxfFmpeg);
     }
@@ -60,7 +59,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1pause(JNIEnv *env, jobject instance) {
 
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->pause();
     }
@@ -70,7 +68,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1resume(JNIEnv *env, jobject instance) {
 
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->resume();
     }
@@ -80,7 +77,6 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1stop(JNIEnv *env, jobject instance) {
 
-    // TODO
     if(!nexit){
         return;
     }
@@ -105,43 +101,41 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1stop(JNIEnv *env, jobject i
     nexit = true;
     env->CallVoidMethod(instance,jm_next);
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1seek(JNIEnv *env, jobject instance,
                                                           jint secds) {
-
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->seek(secds);
     }
 
 }
+
 extern "C"
 JNIEXPORT jint JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1duration(JNIEnv *env, jobject instance) {
 
-    // TODO
     if(yxfFmpeg!=NULL){
         return yxfFmpeg->duration;
     }
     return 0;
+
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1volume(JNIEnv *env, jobject instance,
                                                             jint percent) {
-
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->setVolume(percent);
     }
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1mute(JNIEnv *env, jobject instance,
                                                           jint mute) {
-
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->setMute(mute);
     }
@@ -152,21 +146,39 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1pitch(JNIEnv *env, jobject instance,
                                                            jfloat pitch) {
-
-
     if(yxfFmpeg!=NULL){
         yxfFmpeg->setPitch(pitch);
     }
 
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1speed(JNIEnv *env, jobject instance,
                                                            jfloat speed) {
-
-    // TODO
     if(yxfFmpeg!=NULL){
         yxfFmpeg->setSpeed(speed);
     }
+
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1samplerate(JNIEnv *env, jobject instance) {
+
+   if(yxfFmpeg!=NULL){
+       return yxfFmpeg->getSampleRate();
+   }
+    return 0;
+
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1startStopRecord(JNIEnv *env, jobject instance,
+                                                                     jboolean start) {
+     if(yxfFmpeg!=NULL){
+         yxfFmpeg->startStopRecord(start);
+     }
 
 }

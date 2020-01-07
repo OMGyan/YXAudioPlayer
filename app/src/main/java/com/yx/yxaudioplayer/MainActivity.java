@@ -3,6 +3,7 @@ package com.yx.yxaudioplayer;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.os.Build;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
@@ -20,11 +21,14 @@ import com.yx.yxaudioplayerlib.listener.yxOnErrorListener;
 import com.yx.yxaudioplayerlib.listener.yxOnLoadListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPauseResumeListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPreparedListener;
+import com.yx.yxaudioplayerlib.listener.yxOnRecordTimeListener;
 import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
+import com.yx.yxaudioplayerlib.listener.yxOnValueDBListener;
 import com.yx.yxaudioplayerlib.log.MyLog;
 import com.yx.yxaudioplayerlib.player.YXAudioPlayer;
 import com.yx.yxaudioplayerlib.util.YXTimeUtil;
 
+import java.io.File;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -66,14 +70,14 @@ public class MainActivity extends AppCompatActivity {
     };
     private TextView tv_time;
     private SeekBar seekBar;
-    private TextView tv_volume;
+    private TextView tv_volume,tv_record_time;
     private SeekBar sb_volume;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        tv_record_time = findViewById(R.id.tv_record_time);
         tv_time = ((TextView) findViewById(R.id.tv_time));
         seekBar = ((SeekBar) findViewById(R.id.sb));
         tv_volume = ((TextView) findViewById(R.id.tv_volume));
@@ -142,6 +146,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        player.setOnValueDBListener(new yxOnValueDBListener() {
+            @Override
+            public void onDBValue(int db) {
+                MyLog.d("db is "+db);
+            }
+        });
+
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -159,6 +170,19 @@ public class MainActivity extends AppCompatActivity {
             public void onStopTrackingTouch(SeekBar seekBar) {
                  player.seek(position);
                  isSeek = false;
+            }
+        });
+
+        player.setOnRecordTimeListener(new yxOnRecordTimeListener() {
+            @Override
+            public void onRecordTime(final int recordTime) {
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv_record_time.setText("录制时间 : "+recordTime);
+                    }
+                });
             }
         });
 
@@ -198,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void stop(View view) {
         tv_time.setText("00:00/00:00");
+        tv_record_time.setText("录制时间 : 0");
         seekBar.setProgress(0);
         player.stop();
     }
@@ -236,5 +261,21 @@ public class MainActivity extends AppCompatActivity {
     public void normalspeedpitch(View view) {
         player.setSpeed(1.0f);
         player.setPitch(1.0f);
+    }
+
+    public void start_record(View view) {
+        player.startRecord(new File(Environment.getExternalStorageDirectory(),"yx.aac"));
+    }
+
+    public void pause_record(View view) {
+        player.pauseRecord();
+    }
+
+    public void resume_record(View view) {
+        player.resumeRecord();
+    }
+
+    public void stop_record(View view) {
+        player.stopRecord();
     }
 }

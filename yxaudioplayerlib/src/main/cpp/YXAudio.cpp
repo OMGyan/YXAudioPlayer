@@ -32,8 +32,53 @@ void *decodePlay(void *data){
     pthread_exit(&yxAudio->thread_play);
 }
 
+void *pcmCallBack(void *data){
+    YXAudio *audio = static_cast<YXAudio *>(data);
+    //初始化YXBufferQueue
+    audio->bufferQueue = new YXBufferQueue(audio->yxPlayStatus);
+    while (audio->yxPlayStatus!=NULL && !audio->yxPlayStatus->exit){
+        YXPcmBean *pcmBean = NULL;
+        audio->bufferQueue->getBuffer(&pcmBean);
+        if(pcmBean == NULL){
+            continue;
+        }
+        if(pcmBean->buffsize <= audio->defaultPcmSize){
+            //不分包
+            if(audio->isRecord){
+                audio->yxCallJava->onCallPcmToAAC(CHILD_THREAD,pcmBean->buffsize,pcmBean->buffer);
+            }
+        } else{
+            //分包
+            int pack_num = pcmBean->buffsize / audio->defaultPcmSize;
+            int pack_sub = pcmBean->buffsize % audio->defaultPcmSize;
+
+            for (int i = 0;i < pack_num ;i++){
+                char *bf = static_cast<char *>(malloc(audio->defaultPcmSize));
+                memcpy(bf,pcmBean->buffer+i*audio->defaultPcmSize,audio->defaultPcmSize);
+                if(audio->isRecord){
+                    audio->yxCallJava->onCallPcmToAAC(CHILD_THREAD,audio->defaultPcmSize,bf);
+                }
+                free(bf);
+                bf = NULL;
+            }
+
+            if(pack_sub > 0){
+                char *bf = static_cast<char *>(malloc(pack_sub));
+                memcpy(bf,pcmBean->buffer+ pack_num * audio->defaultPcmSize,pack_sub);
+                if(audio->isRecord){
+                    audio->yxCallJava->onCallPcmToAAC(CHILD_THREAD,pack_sub,bf);
+                }
+            }
+        }
+        delete(pcmBean);
+        pcmBean = NULL;
+    }
+    pthread_exit(&audio->pcmCallBackThread);
+}
+
 void YXAudio::play() {
     pthread_create(&thread_play,NULL,decodePlay,this);
+    pthread_create(&pcmCallBackThread,NULL,pcmCallBack,this);
 }
 
  //FILE *outFile = fopen("/sdcard/ffmpegmusic.pcm","w");
@@ -192,7 +237,13 @@ void pcmBufferCallBack(SLAndroidSimpleBufferQueueItf bf,void *context){
                 yxAudio->last_time = yxAudio->clock;
                 yxAudio->yxCallJava->onCallTimeInfo(CHILD_THREAD,yxAudio->clock,yxAudio->duration);
             }
-             (*yxAudio->pcmBufferQueue)->Enqueue(yxAudio->pcmBufferQueue,(char *) yxAudio->sampleBuffer,bufferSize * 2 * 2);
+//          if(yxAudio->isRecord){
+//              yxAudio->yxCallJava->onCallPcmToAAC(CHILD_THREAD,bufferSize * 4,yxAudio->sampleBuffer);
+//          }
+            yxAudio->bufferQueue->putBuffer(yxAudio->sampleBuffer,bufferSize * 4);
+            yxAudio->yxCallJava->onCallValueDB(CHILD_THREAD,yxAudio->getPCMDB(
+                    reinterpret_cast<char *>(yxAudio->sampleBuffer), bufferSize * 4));
+           (*yxAudio->pcmBufferQueue)->Enqueue(yxAudio->pcmBufferQueue,(char *) yxAudio->sampleBuffer,bufferSize * 2 * 2);
         }
     }
 }
@@ -228,9 +279,9 @@ void YXAudio::initOpenSLES() {
     SLDataSource slDataSource = {&android_queue,&pcm};
     SLDataSink audioSink = {&outputMix,NULL};
 
-    const SLInterfaceID ids[3] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME,SL_IID_MUTESOLO};
-    const SLboolean req[3] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
-    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,3,ids,req);
+    const SLInterfaceID ids[4] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME,SL_IID_PLAYBACKRATE,SL_IID_MUTESOLO};
+    const SLboolean req[4] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
+    (*engineEngine)->CreateAudioPlayer(engineEngine,&pcmPlayerObject,&slDataSource,&audioSink,4,ids,req);
     (*pcmPlayerObject)->Realize(pcmPlayerObject,SL_BOOLEAN_FALSE);
     //得到接口后调用,获取player接口
     (*pcmPlayerObject)->GetInterface(pcmPlayerObject,SL_IID_PLAY,&pclPlayerPlay);
@@ -315,6 +366,13 @@ void YXAudio::stop() {
 
 void YXAudio::release() {
     stop();
+    if(bufferQueue!= NULL){
+        bufferQueue->noticeThread();
+        pthread_join(pcmCallBackThread,NULL);
+        bufferQueue->release();
+        delete(bufferQueue);
+        bufferQueue = NULL;
+    }
     if(yxQueue!=NULL){
         delete(yxQueue);
         yxQueue = NULL;
@@ -428,6 +486,25 @@ void YXAudio::setSpeed(float speed) {
         soundTouch->setTempo(speed);
     }
 
+}
+//计算pcm数据的分贝值(声音的振幅)
+int YXAudio::getPCMDB(char *pcmdata, size_t pcmsize) {
+    int db = 0;
+    short int perValue = 0;
+    double sum = 0;
+    for(int i = 0;i < pcmsize;i+= 2){
+       memcpy(&perValue,pcmdata+i,2);
+       sum += abs(perValue);
+    }
+    sum = sum / (pcmsize/2);
+    if(sum > 0){
+        db = (int)20.0 * log10(sum);
+    }
+    return db;
+}
+
+void YXAudio::startStopRecord(bool start) {
+    this->isRecord = start;
 }
 
 

@@ -24,6 +24,8 @@ YXCallJava::YXCallJava(JavaVM *vm,JNIEnv *jniEnv, jobject job) {
     jm_timeinfo = jev->GetMethodID(jcz,"onCallTimeInfo","(II)V");
     jm_error = jev->GetMethodID(jcz,"onCallError","(ILjava/lang/String;)V");
     jm_complete = jev->GetMethodID(jcz,"onCallComplete","()V");
+    jm_valuedb = jev->GetMethodID(jcz,"onCallValueDB","(I)V");
+    jm_pcmtoaac = jev->GetMethodID(jcz,"encodePcmToAAC","(I[B)V");
 }
 
 YXCallJava::~YXCallJava() {
@@ -127,6 +129,52 @@ void YXCallJava::onCallComplete(int threadType) {
             }
             ev->CallVoidMethod(jobj,jm_complete);
             jvm->DetachCurrentThread();
+            break;
+    }
+}
+
+void YXCallJava::onCallValueDB(int threadType, int db) {
+    switch (threadType){
+        case MAIN_THREAD:
+            jev->CallVoidMethod(jobj,jm_valuedb,db);
+            break;
+        case CHILD_THREAD:
+            JNIEnv *ev;
+            if(jvm->AttachCurrentThread(&ev,0)!=JNI_OK){
+                if(LOG_DEBUG){
+                    LOGE("get child thread jnienv wrong");
+                }
+                return;
+            }
+            ev->CallVoidMethod(jobj,jm_valuedb,db);
+            jvm->DetachCurrentThread();
+            break;
+    }
+}
+
+void YXCallJava::onCallPcmToAAC(int threadType, int size, void *buffer) {
+    switch (threadType){
+        case MAIN_THREAD: {
+            jbyteArray jbuffer = jev->NewByteArray(size);
+            jev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+            jev->CallVoidMethod(jobj, jm_pcmtoaac, size, jbuffer);
+            jev->DeleteLocalRef(jbuffer);
+        }
+            break;
+        case CHILD_THREAD: {
+            JNIEnv *ev;
+            if (jvm->AttachCurrentThread(&ev, 0) != JNI_OK) {
+                if (LOG_DEBUG) {
+                    LOGE("get child thread jnienv wrong");
+                }
+                return;
+            }
+            jbyteArray jbuffer = ev->NewByteArray(size);
+            ev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+            ev->CallVoidMethod(jobj, jm_pcmtoaac, size, jbuffer);
+            ev->DeleteLocalRef(jbuffer);
+            jvm->DetachCurrentThread();
+        }
             break;
     }
 }

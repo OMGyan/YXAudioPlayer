@@ -286,4 +286,17 @@ void YXFFmpeg::setSpeed(float speed) {
     }
 }
 
+int YXFFmpeg::getSampleRate() {
+    if(yxAudio!= NULL){
+        return yxAudio->avCodecContext->sample_rate;
+    }
+    return 0;
+}
+
+void YXFFmpeg::startStopRecord(bool start) {
+   if(yxAudio!=NULL){
+       yxAudio->startStopRecord(start);
+   }
+}
+
 
