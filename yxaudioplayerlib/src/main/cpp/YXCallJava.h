@@ -35,6 +35,8 @@ public:
     jmethodID jm_complete;
     jmethodID jm_valuedb;
     jmethodID jm_pcmtoaac;
+    jmethodID jm_pcminfo;
+    jmethodID jm_pcmsamplerate;
 
 public:
     YXCallJava(JavaVM *vm,JNIEnv *jniEnv,jobject job);
@@ -46,6 +48,8 @@ public:
     void onCallComplete(int threadType);
     void onCallValueDB(int threadType,int db);
     void onCallPcmToAAC(int threadType,int size, void *buffer);
+    void onCallPcmInfo(void *buffer,int size);
+    void onCallPcmRate(int samplerate);
 };
 
 

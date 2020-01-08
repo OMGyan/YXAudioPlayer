@@ -18,6 +18,7 @@ using namespace soundtouch;
 extern "C"{
 #include <libavcodec/avcodec.h>
 #include <libswresample/swresample.h>
+#include <libavutil/time.h>
 };
 
 extern "C" {
@@ -78,6 +79,10 @@ public:
     int nb = 0;
     int num = 0;
     bool isRecord = false;
+    bool readFrameFinished = true;
+    bool isCut = false;
+    int end_time = 0;
+    bool showPcm = false;
 
     pthread_t pcmCallBackThread;
     YXBufferQueue *bufferQueue;

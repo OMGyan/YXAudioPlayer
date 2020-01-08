@@ -76,6 +76,7 @@ void YXFFmpeg::decodeFFmpegThread() {
                   yxAudio->duration = pFormatCtx->duration / AV_TIME_BASE;
                   yxAudio->time_base = pFormatCtx->streams[i]->time_base;
                   duration = yxAudio->duration;
+                  yxCallJava->onCallPcmRate(yxAudio->sample_rate);
               }
         }
     }
@@ -140,9 +141,11 @@ void YXFFmpeg::start() {
     while(status!=NULL && !status->exit){
         //seek下不解码
         if(status->seek){
+            av_usleep(1000 * 100);
             continue;
         }
-        if(yxAudio->yxQueue->getQueueSize() > 40){
+        if(yxAudio->yxQueue->getQueueSize() > 10){
+            av_usleep(1000 * 100);
             continue;
         }
         //读取音频帧
@@ -152,7 +155,6 @@ void YXFFmpeg::start() {
         pthread_mutex_unlock(&seek_mutex);
         if(ret==0){
             if(packet->stream_index == yxAudio->streamIndex){
-
                 yxAudio->yxQueue->putAvpacket(packet);
             } else{
                 av_packet_free(&packet);
@@ -165,6 +167,7 @@ void YXFFmpeg::start() {
            packet = NULL;
            while(status!=NULL && !status->exit){
                 if(yxAudio->yxQueue->getQueueSize() > 0){
+                    av_usleep(1000 * 100);
                     continue;
                 } else{
                     status->exit = true;
@@ -253,6 +256,13 @@ void YXFFmpeg::seek(int64_t secds) {
             pthread_mutex_lock(&seek_mutex);
             //获取seek的时间,并进行seek
             int64_t rel = secds * AV_TIME_BASE;
+            /**
+             * 问题:seek时播放不连贯
+             * 原因:
+             * 由于一个AVPacket里面有多个AVFrame,当seek时,FFmpeg解码器
+             * 中还残留AVFrame,所以导致seek后，不能立即播放当前音乐
+             */
+            avcodec_flush_buffers(yxAudio->avCodecContext);
             avformat_seek_file(pFormatCtx,-1,INT64_MIN,rel,INT64_MAX,0);
             pthread_mutex_unlock(&seek_mutex);
             status->seek = false;
@@ -297,6 +307,17 @@ void YXFFmpeg::startStopRecord(bool start) {
    if(yxAudio!=NULL){
        yxAudio->startStopRecord(start);
    }
+}
+
+bool YXFFmpeg::cutAudio(int start_time, int end_time, bool isShowPcm) {
+    if(start_time >= 0 && end_time <= duration && start_time < end_time){
+        yxAudio->isCut = true;
+        yxAudio->end_time = end_time;
+        yxAudio->showPcm = isShowPcm;
+        seek(start_time);
+        return true;
+    }
+    return false;
 }
 
 

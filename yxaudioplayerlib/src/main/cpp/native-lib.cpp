@@ -182,3 +182,16 @@ Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1startStopRecord(JNIEnv *env
      }
 
 }
+
+extern "C"
+JNIEXPORT jboolean JNICALL
+Java_com_yx_yxaudioplayerlib_player_YXAudioPlayer_n_1cutaudio(JNIEnv *env, jobject instance,
+                                                              jint start_time, jint end_time,
+                                                              jboolean showPcm) {
+    // TODO
+    if(yxfFmpeg != NULL){
+        return yxfFmpeg->cutAudio(start_time,end_time,showPcm);
+
+    }
+    return false;
+}

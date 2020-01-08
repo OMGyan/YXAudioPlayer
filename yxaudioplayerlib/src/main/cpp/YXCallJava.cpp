@@ -26,6 +26,8 @@ YXCallJava::YXCallJava(JavaVM *vm,JNIEnv *jniEnv, jobject job) {
     jm_complete = jev->GetMethodID(jcz,"onCallComplete","()V");
     jm_valuedb = jev->GetMethodID(jcz,"onCallValueDB","(I)V");
     jm_pcmtoaac = jev->GetMethodID(jcz,"encodePcmToAAC","(I[B)V");
+    jm_pcminfo = jev->GetMethodID(jcz,"onCallPcmInfo","([BI)V");
+    jm_pcmsamplerate = jev->GetMethodID(jcz,"onCallPcmRate","(I)V");
 }
 
 YXCallJava::~YXCallJava() {
@@ -177,4 +179,31 @@ void YXCallJava::onCallPcmToAAC(int threadType, int size, void *buffer) {
         }
             break;
     }
+}
+
+void YXCallJava::onCallPcmInfo(void *buffer, int size) {
+    JNIEnv *ev;
+    if (jvm->AttachCurrentThread(&ev, 0) != JNI_OK) {
+        if (LOG_DEBUG) {
+            LOGE("get child thread jnienv wrong");
+        }
+        return;
+    }
+    jbyteArray jbuffer = ev->NewByteArray(size);
+    ev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+    ev->CallVoidMethod(jobj, jm_pcminfo, jbuffer, size);
+    ev->DeleteLocalRef(jbuffer);
+    jvm->DetachCurrentThread();
+}
+
+void YXCallJava::onCallPcmRate(int samplerate) {
+    JNIEnv *ev;
+    if(jvm->AttachCurrentThread(&ev,0)!=JNI_OK){
+        if(LOG_DEBUG){
+            LOGE("get child thread jnienv wrong");
+        }
+        return;
+    }
+    ev->CallVoidMethod(jobj,jm_pcmsamplerate,samplerate);
+    jvm->DetachCurrentThread();
 }

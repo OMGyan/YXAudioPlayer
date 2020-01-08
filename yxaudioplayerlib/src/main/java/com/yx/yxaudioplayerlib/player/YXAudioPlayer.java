@@ -11,6 +11,7 @@ import com.yx.yxaudioplayerlib.listener.yxOnCompleteListener;
 import com.yx.yxaudioplayerlib.listener.yxOnErrorListener;
 import com.yx.yxaudioplayerlib.listener.yxOnLoadListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPauseResumeListener;
+import com.yx.yxaudioplayerlib.listener.yxOnPcmInfoListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPreparedListener;
 import com.yx.yxaudioplayerlib.listener.yxOnRecordTimeListener;
 import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
@@ -44,6 +45,8 @@ public class YXAudioPlayer {
     private yxOnValueDBListener onValueDBListener;
 
     private yxOnRecordTimeListener onRecordTimeListener;
+
+    private yxOnPcmInfoListener onPcmInfoListener;
 
     private boolean playNext = false;
 
@@ -112,6 +115,10 @@ public class YXAudioPlayer {
         this.onRecordTimeListener = onRecordTimeListener;
     }
 
+    public void setOnPcmInfoListener(yxOnPcmInfoListener onPcmInfoListener) {
+        this.onPcmInfoListener = onPcmInfoListener;
+    }
+
     private String source;
 
     public void setSource(String source) {
@@ -158,6 +165,18 @@ public class YXAudioPlayer {
     public void onCallValueDB(int db){
         if(onValueDBListener!=null){
             onValueDBListener.onDBValue(db);
+        }
+    }
+
+    public void onCallPcmInfo(byte[] buffer,int bufferSize){
+        if(onPcmInfoListener!=null){
+           onPcmInfoListener.onPcmInfo(buffer,bufferSize);
+        }
+    }
+
+    public void onCallPcmRate(int sampleRate){
+        if(onPcmInfoListener!=null){
+            onPcmInfoListener.onPcmRate(sampleRate,16,2);
         }
     }
 
@@ -299,6 +318,15 @@ public class YXAudioPlayer {
         MyLog.d("继续录制");
     }
 
+    public void cutAudioPlay(int start_time,int end_time,boolean showPcm){
+        if(n_cutaudio(start_time,end_time,showPcm)){
+            start();
+        }else {
+            stop();
+            onCallError(100,"cuteaudio params is wrong");
+        }
+    }
+
     private native void n_prepared(String source);
 
     private native void n_start();
@@ -324,6 +352,8 @@ public class YXAudioPlayer {
     private native int n_samplerate();
 
     private native void n_startStopRecord(boolean start);
+
+    private native boolean n_cutaudio(int start_time,int end_time,boolean showPcm);
 
     //MediaCodec
 

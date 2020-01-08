@@ -20,6 +20,7 @@ import com.yx.yxaudioplayerlib.listener.yxOnCompleteListener;
 import com.yx.yxaudioplayerlib.listener.yxOnErrorListener;
 import com.yx.yxaudioplayerlib.listener.yxOnLoadListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPauseResumeListener;
+import com.yx.yxaudioplayerlib.listener.yxOnPcmInfoListener;
 import com.yx.yxaudioplayerlib.listener.yxOnPreparedListener;
 import com.yx.yxaudioplayerlib.listener.yxOnRecordTimeListener;
 import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
@@ -99,6 +100,8 @@ public class MainActivity extends AppCompatActivity {
             public void onPrepared() {
                 MyLog.d("onPrepared");
                 player.start();
+                //裁剪音频
+               // player.cutAudioPlay(10,40,true);
             }
         });
         player.setOnLoadListener(new yxOnLoadListener() {
@@ -110,6 +113,19 @@ public class MainActivity extends AppCompatActivity {
                     MyLog.d("播放中...");
                 }
             }
+        });
+
+        player.setOnPcmInfoListener(new yxOnPcmInfoListener() {
+            @Override
+            public void onPcmInfo(byte[] buffer, int bufferSize) {
+                MyLog.d("bufferSize : "+bufferSize);
+            }
+
+            @Override
+            public void onPcmRate(int sampleRate, int bit, int channels) {
+                MyLog.d("sampleRate : "+sampleRate);
+            }
+
         });
 
         player.setOnPauseResumeListener(new yxOnPauseResumeListener() {
@@ -149,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         player.setOnValueDBListener(new yxOnValueDBListener() {
             @Override
             public void onDBValue(int db) {
-                MyLog.d("db is "+db);
+             //   MyLog.d("db is "+db);
             }
         });
 
