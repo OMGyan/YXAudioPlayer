@@ -224,7 +224,8 @@ public class MainActivity extends AppCompatActivity {
         });
     }
     public void begin(View view) {
-       player.setSource(AUDIO_SOURCE);
+       String path = new File(Environment.getExternalStorageDirectory(),"Android仿微信实现IOS风格的滑动返回.mp4").getAbsolutePath();
+       player.setSource(path);
        player.prepared();
     }
 
@@ -244,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void next(View view) {
-        player.playNext(AUDIO_SOURCE_TWO);
+       // player.playNext(AUDIO_SOURCE_TWO);
     }
 
     public void leftChannel(View view) {

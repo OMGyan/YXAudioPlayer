@@ -37,6 +37,7 @@ public:
     jmethodID jm_pcmtoaac;
     jmethodID jm_pcminfo;
     jmethodID jm_pcmsamplerate;
+    jmethodID jm_rendereryuv;
 
 public:
     YXCallJava(JavaVM *vm,JNIEnv *jniEnv,jobject job);
@@ -50,6 +51,7 @@ public:
     void onCallPcmToAAC(int threadType,int size, void *buffer);
     void onCallPcmInfo(void *buffer,int size);
     void onCallPcmRate(int samplerate);
+    void onCallRendererYUV(int width,int height,uint8_t *fy,uint8_t *fu,uint8_t *fv);
 };
 
 

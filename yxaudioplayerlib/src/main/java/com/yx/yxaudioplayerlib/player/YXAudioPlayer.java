@@ -17,6 +17,7 @@ import com.yx.yxaudioplayerlib.listener.yxOnRecordTimeListener;
 import com.yx.yxaudioplayerlib.listener.yxOnTimeInfoListener;
 import com.yx.yxaudioplayerlib.listener.yxOnValueDBListener;
 import com.yx.yxaudioplayerlib.log.MyLog;
+import com.yx.yxaudioplayerlib.opengl.YXGLSurfaceView;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -58,6 +59,8 @@ public class YXAudioPlayer {
     private float pitch = 1.0f;
     private boolean initMediaCodec = false;
 
+    private YXGLSurfaceView surfaceView;
+
     //初始化声道
     private ChannelEnum ce = ChannelEnum.CHANNEL_LEFT;
 
@@ -85,6 +88,10 @@ public class YXAudioPlayer {
 
     public void setOnPreparedListener(yxOnPreparedListener onPreparedListener) {
         OnPreparedListener = onPreparedListener;
+    }
+
+    public void setSurfaceView(YXGLSurfaceView surfaceView) {
+        this.surfaceView = surfaceView;
     }
 
     public void setOnLoadListener(yxOnLoadListener onLoadListener) {
@@ -186,6 +193,13 @@ public class YXAudioPlayer {
             playNext = !playNext;
             prepared();
         }
+    }
+
+    public void onCallRendererYUV(int width,int height,byte[] Y,byte[] U,byte[] V){
+       MyLog.d("获取到视频的YUV数据");
+       if(surfaceView!=null){
+           surfaceView.setYUVData(width,height,Y,U,V);
+       }
     }
 
     public void prepared(){
