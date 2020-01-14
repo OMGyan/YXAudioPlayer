@@ -77,7 +77,7 @@ void *playVideo(void *data){
         LOGE("子线程解码一个AVframe成功");
         //如果AVframe的视频格式为YUV420P则直接丢给应用层渲染,否则先转成YUV420P格式
         if(avFrame->format == AV_PIX_FMT_YUV420P){//直接渲染
-            LOGE("当前视频是YUV420P格式");
+
             video->callJava->onCallRendererYUV(
                     avFrame->linesize[0],
                     avFrame->height,
@@ -85,7 +85,7 @@ void *playVideo(void *data){
                     avFrame->data[1],
                     avFrame->data[2]);
         } else{//转换格式
-            LOGE("当前视频不是YUV420P格式");
+
             //得到一个AVframe(需要分配内存空间)
             AVFrame *pFrameYUV420P = av_frame_alloc();
             //返回以字节为单位的大小，以存储数据所需的数据量

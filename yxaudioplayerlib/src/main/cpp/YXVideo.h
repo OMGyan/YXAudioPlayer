@@ -7,7 +7,6 @@
 
 #ifndef YXAUDIOPLAYER_YXVIDEO_H
 
-//由于FFmpeg是C语言编写的,又因为这里是C++环境,所以下面这样做
 extern "C"{
 #include <libswscale/swscale.h>
 #include <libavutil/imgutils.h>
