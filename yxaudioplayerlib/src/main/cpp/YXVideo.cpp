@@ -85,7 +85,7 @@ void *playVideo(void *data){
                     avFrame->data[1],
                     avFrame->data[2]);
         } else{//转换格式
-
+            LOGE("当前视频不是YUV420P格式");
             //得到一个AVframe(需要分配内存空间)
             AVFrame *pFrameYUV420P = av_frame_alloc();
             //返回以字节为单位的大小，以存储数据所需的数据量
