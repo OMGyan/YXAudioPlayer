@@ -25,7 +25,7 @@ public:
     pthread_t decodeThread;
     AVFormatContext *pFormatCtx = NULL;
     YXAudio *yxAudio = NULL;
-    //声明video类
+
     YXVideo *video = NULL;
     YXPlayStatus *status;
     pthread_mutex_t init_mutex;

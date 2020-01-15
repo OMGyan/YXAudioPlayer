@@ -36,7 +36,6 @@ int avformat_callback(void *ctx){
 void YXFFmpeg::decodeFFmpegThread() {
 
     pthread_mutex_lock(&init_mutex);
-
     //注册解码器并初始化网络
    av_register_all();
    avformat_network_init();
