@@ -46,7 +46,6 @@ public class VideoActivity extends AppCompatActivity {
                 ActivityCompat.requestPermissions(this,PERMISSIONS_STORAGE,REQUEST_PERMISSION_CODE);
             }
         }
-
         surfaceView = findViewById(R.id.sv);
         player = YXAudioPlayer.getDefault();
         player.setSurfaceView(surfaceView);

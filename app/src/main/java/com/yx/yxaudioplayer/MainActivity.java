@@ -246,6 +246,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void next(View view) {
        // player.playNext(AUDIO_SOURCE_TWO);
+
     }
 
     public void leftChannel(View view) {
