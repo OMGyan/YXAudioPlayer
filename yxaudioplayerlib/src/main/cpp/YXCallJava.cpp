@@ -30,9 +30,7 @@ YXCallJava::YXCallJava(JavaVM *vm,JNIEnv *jniEnv, jobject job) {
     jm_rendereryuv = jev->GetMethodID(jcz,"onCallRendererYUV","(II[B[B[B)V");
 }
 
-YXCallJava::~YXCallJava() {
-
-}
+YXCallJava::~YXCallJava() {}
 
 void YXCallJava::onCallPrepared(int threadType) {
    switch (threadType){

@@ -25,6 +25,7 @@
 class YXCallJava {
 
 public:
+
     JavaVM *jvm;
     JNIEnv *jev;
     jobject jobj;
@@ -40,6 +41,7 @@ public:
     jmethodID jm_rendereryuv;
 
 public:
+
     YXCallJava(JavaVM *vm,JNIEnv *jniEnv,jobject job);
     ~YXCallJava();
     void onCallPrepared(int threadType);
@@ -52,6 +54,7 @@ public:
     void onCallPcmInfo(void *buffer,int size);
     void onCallPcmRate(int samplerate);
     void onCallRendererYUV(int width,int height,uint8_t *fy,uint8_t *fu,uint8_t *fv);
+
 };
 
 
