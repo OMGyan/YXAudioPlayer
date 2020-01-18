@@ -4,6 +4,7 @@
 
 #include "YXQueue.h"
 #include "YXCallJava.h"
+#include "YXAudio.h"
 
 #ifndef YXAUDIOPLAYER_YXVIDEO_H
 
@@ -35,6 +36,14 @@ public:
     AVRational time_base;
     //创建线程用来获取队列里的数据
     pthread_t thread_play;
+    //声明一个audio
+    YXAudio *audio = NULL;
+    //声明全局时间变量
+    double clock = 0;
+    //声明一个延迟时间
+    double delayTime = 0;
+    //声明一个默认的睡眠延迟时间
+    double defaultDelayTime = 0.04;
 
 public:
     //创建构造方法
@@ -45,6 +54,10 @@ public:
     void play();
     //释放资源内存
     void release();
+    //获取音频与视频帧的时间差
+    double getFrameDiffTime(AVFrame *avFrame);
+    //设置视频休眠时间
+    double getDelayTime(double diff);
 };
 
 

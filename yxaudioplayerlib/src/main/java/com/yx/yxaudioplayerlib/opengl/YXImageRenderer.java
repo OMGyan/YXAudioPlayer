@@ -102,6 +102,7 @@ public class YXImageRenderer implements GLSurfaceView.Renderer{
         //用黑色清屏
         GLES20.glClearColor(0.0f,0.0f,0.0f,1.0f);
         rendererYUV();
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);
     }
 
     private void initYUVRenderer(){
@@ -196,7 +197,7 @@ public class YXImageRenderer implements GLSurfaceView.Renderer{
             y = null;
             u = null;
             v = null;
-            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP,0,4);
+
         }
 
     }

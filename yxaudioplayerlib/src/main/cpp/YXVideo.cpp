@@ -9,13 +9,9 @@ YXVideo::YXVideo(YXPlayStatus *yxPlayStatus, YXCallJava *yxCallJava) {
     this->playStatus = yxPlayStatus;
     this->callJava = yxCallJava;
     this->queue = new YXQueue(yxPlayStatus);
-
-
 }
 
-YXVideo::~YXVideo() {
-
-}
+YXVideo::~YXVideo() {}
 
 void *playVideo(void *data){
     //获取YXVideo对象
@@ -77,7 +73,11 @@ void *playVideo(void *data){
         LOGE("子线程解码一个AVframe成功");
         //如果AVframe的视频格式为YUV420P则直接丢给应用层渲染,否则先转成YUV420P格式
         if(avFrame->format == AV_PIX_FMT_YUV420P){//直接渲染
-
+            //拿到当前帧视频与音频的时间差
+            double diffTime = video->getFrameDiffTime(avFrame);
+            LOGE("diffTime is %f",diffTime);
+            //睡眠时间保证音画同步
+            av_usleep(video->getDelayTime(diffTime) * 1000000);
             video->callJava->onCallRendererYUV(
                     avFrame->linesize[0],
                     avFrame->height,
@@ -85,7 +85,6 @@ void *playVideo(void *data){
                     avFrame->data[1],
                     avFrame->data[2]);
         } else{//转换格式
-
             //得到一个AVframe(需要分配内存空间)
             AVFrame *pFrameYUV420P = av_frame_alloc();
             //返回以字节为单位的大小，以存储数据所需的数据量
@@ -130,6 +129,12 @@ void *playVideo(void *data){
                     avFrame->height,
                     pFrameYUV420P->data,
                     pFrameYUV420P->linesize);
+
+            //拿到当前帧视频与音频的时间差
+            double diffTime = video->getFrameDiffTime(avFrame);
+            LOGE("diffTime is %f",diffTime);
+            //睡眠时间保证音画同步
+            av_usleep(video->getDelayTime(diffTime) * 1000000);
 
             //回调到应用层渲染
             video->callJava->onCallRendererYUV(
@@ -179,5 +184,51 @@ void YXVideo::release() {
     if(callJava!=NULL){
         callJava = NULL;
     }
+}
+
+double YXVideo::getFrameDiffTime(AVFrame *avFrame) {
+    //获取当前帧的PTS
+    double pts = av_frame_get_best_effort_timestamp(avFrame);
+    if(pts == AV_NOPTS_VALUE){
+        //如果没有获取到值,就置为0
+        pts = 0;
+    }
+    pts *= av_q2d(time_base);
+    if(pts > 0){
+        //保存全局时间
+        clock = pts;
+    }
+    return audio->clock - clock;
+}
+
+double YXVideo::getDelayTime(double diff) {
+    if(diff > 0.003){
+        delayTime = delayTime * 2 / 3;
+        if(delayTime < defaultDelayTime / 2){
+            delayTime = defaultDelayTime * 2 / 3;
+        } else if(delayTime > defaultDelayTime * 2){
+            delayTime = defaultDelayTime * 2;
+        }
+    }else if(diff < -0.003){
+        delayTime = delayTime * 3 / 2;
+        if(delayTime < defaultDelayTime / 2){
+            delayTime = defaultDelayTime * 2 / 3;
+        } else if(delayTime > defaultDelayTime * 2){
+            delayTime = defaultDelayTime * 2;
+        }
+    } else if(diff == 0.003){
+
+    }
+
+    if(diff >= 0.5){
+        delayTime = 0;
+    } else if(diff <= -0.5){
+        delayTime = defaultDelayTime * 2;
+    }
+
+    if(fabs(diff) >= 10){
+        delayTime = defaultDelayTime;
+    }
+    return delayTime;
 }
 

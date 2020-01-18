@@ -87,6 +87,15 @@ void YXFFmpeg::decodeFFmpegThread() {
                   video->avCodecParameters = pFormatCtx->streams[i]->codecpar;
                   //给时间刻度赋值
                   video->time_base = pFormatCtx->streams[i]->time_base;
+
+                  int num = pFormatCtx->streams[i]->avg_frame_rate.num;
+                  int den = pFormatCtx->streams[i]->avg_frame_rate.den;
+
+                  if(den!=0 && num!=0){
+                      int fps = num / den;
+                      video->defaultDelayTime = 1.0 / fps;
+                  }
+
               }
         }
     }
@@ -111,6 +120,14 @@ void YXFFmpeg::start() {
         }
         return;
     }
+    if(video == NULL){
+        if(LOG_DEBUG){
+            yxCallJava->onCallError(CHILD_THREAD,YXAUDIO_IS_NULL,"yxvidio is null");
+        }
+        return;
+    }
+    video->audio = yxAudio;
+
     yxAudio->play();
     //启动视频线程
     video->play();
