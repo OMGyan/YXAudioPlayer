@@ -18,6 +18,9 @@ add_library( #生成动态库的名字
              src/main/cpp/YXFFmpeg.cpp
              src/main/cpp/YXPlayStatus.cpp
              src/main/cpp/YXQueue.cpp
+             src/main/cpp/YXBufferQueue.cpp
+             src/main/cpp/YXPcmBean.cpp
+             src/main/cpp/YXVideo.cpp
 
              src/main/cpp/soundtouch/sources/AAFilter.cpp
              src/main/cpp/soundtouch/sources/cpu_detect_x86.cpp

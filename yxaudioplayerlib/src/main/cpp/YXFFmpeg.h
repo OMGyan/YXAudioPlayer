@@ -9,6 +9,7 @@
 #include "pthread.h"
 #include "AndroidLog.h"
 #include "YXAudio.h"
+#include "YXVideo.h"
 
 extern "C"{
 #include <libavformat/avformat.h>
@@ -24,6 +25,8 @@ public:
     pthread_t decodeThread;
     AVFormatContext *pFormatCtx = NULL;
     YXAudio *yxAudio = NULL;
+
+    YXVideo *video = NULL;
     YXPlayStatus *status;
     pthread_mutex_t init_mutex;
     bool exit = false;
@@ -45,6 +48,14 @@ public:
     void setPitch(float pitch);
 
     void setSpeed(float speed);
+
+    int getSampleRate();
+
+    void startStopRecord(bool start);
+
+    bool cutAudio(int start_time,int end_time, bool isShowPcm);
+
+    int getCodecContext(AVCodecParameters *codecParameters,AVCodecContext **codecContext);
 };
 
 

@@ -36,7 +36,6 @@ int avformat_callback(void *ctx){
 void YXFFmpeg::decodeFFmpegThread() {
 
     pthread_mutex_lock(&init_mutex);
-
     //注册解码器并初始化网络
    av_register_all();
    avformat_network_init();
@@ -67,7 +66,7 @@ void YXFFmpeg::decodeFFmpegThread() {
    }
    //循环获取音频流
     for (int i = 0; i < pFormatCtx->nb_streams; i++) {
-        if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){
+        if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO){//得到音频流
               if(yxAudio==NULL){
                   yxAudio = new YXAudio(status,pFormatCtx->streams[i]->codecpar->sample_rate,yxCallJava);
                   yxAudio->streamIndex = i;
@@ -76,50 +75,36 @@ void YXFFmpeg::decodeFFmpegThread() {
                   yxAudio->duration = pFormatCtx->duration / AV_TIME_BASE;
                   yxAudio->time_base = pFormatCtx->streams[i]->time_base;
                   duration = yxAudio->duration;
+                  yxCallJava->onCallPcmRate(yxAudio->sample_rate);
+              }
+        } else if(pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO){//得到视频流
+              if(video==NULL){
+                  //创建yxvideo
+                  video = new YXVideo(status,yxCallJava);
+                  //给视频索引赋值
+                  video->videoStreamIndex = i;
+                  //给视频解码器属性赋值
+                  video->avCodecParameters = pFormatCtx->streams[i]->codecpar;
+                  //给时间刻度赋值
+                  video->time_base = pFormatCtx->streams[i]->time_base;
+
+                  int num = pFormatCtx->streams[i]->avg_frame_rate.num;
+                  int den = pFormatCtx->streams[i]->avg_frame_rate.den;
+
+                  if(den!=0 && num!=0){
+                      int fps = num / den;
+                      video->defaultDelayTime = 1.0 / fps;
+                  }
+
               }
         }
     }
-    //获取解码器
-    AVCodec *dec = avcodec_find_decoder(yxAudio->codecpar->codec_id);
-    if(!dec){
-        if(LOG_DEBUG){
-            LOGE("can not find decoder");
-            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_FIND_DECODER,"can not find decoder");
-        }
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
+    if(yxAudio!=NULL){
+        getCodecContext(yxAudio->codecpar,&yxAudio->avCodecContext);
     }
-    //利用解码器创建解码器上下文
-    yxAudio->avCodecContext = avcodec_alloc_context3(dec);
-    if(!yxAudio->avCodecContext){
-        if(LOG_DEBUG){
-            LOGE("can not alloc new decoderctx");
-            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_ALLOC_DECODER_CONTEXT,"can not alloc new decoderctx");
-        }
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
-
-    if(avcodec_parameters_to_context(yxAudio->avCodecContext,yxAudio->codecpar)<0){
-        if(LOG_DEBUG){
-            LOGE("can not fill decoderctx");
-            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_FILL_DECODER_CONTEXT,"can not fill decoderctx");
-        }
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
-    }
-    //打开解码器
-    if(avcodec_open2(yxAudio->avCodecContext,dec,0)!=0){
-        if(LOG_DEBUG){
-            LOGE("can not open audio streams");
-            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_OPEN_AUDIO_STREAMS,"can not open audio streams");
-        }
-        exit = true;
-        pthread_mutex_unlock(&init_mutex);
-        return;
+    if(video!=NULL){
+        //拿到解码器上下文
+        getCodecContext(video->avCodecParameters,&video->avCodecContext);
     }
     yxCallJava->onCallPrepared(CHILD_THREAD);
     pthread_mutex_unlock(&init_mutex);
@@ -135,25 +120,38 @@ void YXFFmpeg::start() {
         }
         return;
     }
-    yxAudio->play();
+    if(video == NULL){
+        if(LOG_DEBUG){
+            yxCallJava->onCallError(CHILD_THREAD,YXAUDIO_IS_NULL,"yxvidio is null");
+        }
+        return;
+    }
+    video->audio = yxAudio;
 
+    yxAudio->play();
+    //启动视频线程
+    video->play();
     while(status!=NULL && !status->exit){
         //seek下不解码
         if(status->seek){
+            av_usleep(1000 * 100);
             continue;
         }
-        if(yxAudio->yxQueue->getQueueSize() > 40){
+        if(yxAudio->yxQueue->getQueueSize() > 10){
+            av_usleep(1000 * 100);
             continue;
         }
-        //读取音频帧
+        //读取数据帧
         AVPacket *packet = av_packet_alloc();
         pthread_mutex_lock(&seek_mutex);
         int ret = av_read_frame(pFormatCtx,packet);
         pthread_mutex_unlock(&seek_mutex);
         if(ret==0){
-            if(packet->stream_index == yxAudio->streamIndex){
-
+            if(packet->stream_index == yxAudio->streamIndex) {
                 yxAudio->yxQueue->putAvpacket(packet);
+            } else if(packet->stream_index == video->videoStreamIndex){
+               //根据视频流索引将相应AVpacket放入队列
+                video->queue->putAvpacket(packet);
             } else{
                 av_packet_free(&packet);
                 av_free(packet);
@@ -165,6 +163,7 @@ void YXFFmpeg::start() {
            packet = NULL;
            while(status!=NULL && !status->exit){
                 if(yxAudio->yxQueue->getQueueSize() > 0){
+                    av_usleep(1000 * 100);
                     continue;
                 } else{
                     status->exit = true;
@@ -215,6 +214,12 @@ void YXFFmpeg::release() {
         delete(yxAudio);
         yxAudio = NULL;
     }
+    LOGE("释放video");
+    if(video != NULL){
+        video->release();
+        delete(video);
+        video = NULL;
+    }
     if(pFormatCtx!=NULL){
         avformat_close_input(&pFormatCtx);
         avformat_free_context(pFormatCtx);
@@ -253,6 +258,13 @@ void YXFFmpeg::seek(int64_t secds) {
             pthread_mutex_lock(&seek_mutex);
             //获取seek的时间,并进行seek
             int64_t rel = secds * AV_TIME_BASE;
+            /**
+             * 问题:seek时播放不连贯
+             * 原因:
+             * 由于一个AVPacket里面有多个AVFrame,当seek时,FFmpeg解码器
+             * 中还残留AVFrame,所以导致seek后，不能立即播放当前音乐
+             */
+            avcodec_flush_buffers(yxAudio->avCodecContext);
             avformat_seek_file(pFormatCtx,-1,INT64_MIN,rel,INT64_MAX,0);
             pthread_mutex_unlock(&seek_mutex);
             status->seek = false;
@@ -284,6 +296,76 @@ void YXFFmpeg::setSpeed(float speed) {
     if(yxAudio!=NULL){
         yxAudio->setSpeed(speed);
     }
+}
+
+int YXFFmpeg::getSampleRate() {
+    if(yxAudio!= NULL){
+        return yxAudio->avCodecContext->sample_rate;
+    }
+    return 0;
+}
+
+void YXFFmpeg::startStopRecord(bool start) {
+   if(yxAudio!=NULL){
+       yxAudio->startStopRecord(start);
+   }
+}
+
+bool YXFFmpeg::cutAudio(int start_time, int end_time, bool isShowPcm) {
+    if(start_time >= 0 && end_time <= duration && start_time < end_time){
+        yxAudio->isCut = true;
+        yxAudio->end_time = end_time;
+        yxAudio->showPcm = isShowPcm;
+        seek(start_time);
+        return true;
+    }
+    return false;
+}
+
+int YXFFmpeg::getCodecContext(AVCodecParameters *codecParameters, AVCodecContext **codecContext) {
+    //获取解码器
+    AVCodec *dec = avcodec_find_decoder(codecParameters->codec_id);
+    if(!dec){
+        if(LOG_DEBUG){
+            LOGE("can not find decoder");
+            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_FIND_DECODER,"can not find decoder");
+        }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    //利用解码器创建解码器上下文
+    *codecContext = avcodec_alloc_context3(dec);
+    if(!yxAudio->avCodecContext){
+        if(LOG_DEBUG){
+            LOGE("can not alloc new decoderctx");
+            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_ALLOC_DECODER_CONTEXT,"can not alloc new decoderctx");
+        }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+
+    if(avcodec_parameters_to_context(*codecContext,codecParameters)<0){
+        if(LOG_DEBUG){
+            LOGE("can not fill decoderctx");
+            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_FILL_DECODER_CONTEXT,"can not fill decoderctx");
+        }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    //打开解码器
+    if(avcodec_open2(*codecContext,dec,0)!=0){
+        if(LOG_DEBUG){
+            LOGE("can not open audio streams");
+            yxCallJava->onCallError(CHILD_THREAD,CAN_NOT_OPEN_AUDIO_STREAMS,"can not open audio streams");
+        }
+        exit = true;
+        pthread_mutex_unlock(&init_mutex);
+        return -1;
+    }
+    return 0;
 }
 
 

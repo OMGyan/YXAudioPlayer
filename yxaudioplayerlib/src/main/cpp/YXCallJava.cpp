@@ -18,17 +18,19 @@ YXCallJava::YXCallJava(JavaVM *vm,JNIEnv *jniEnv, jobject job) {
         }
         return ;
     }
-
     jm_prepared = jev->GetMethodID(jcz,"onCallPrepared","()V");
     jm_load = jev->GetMethodID(jcz,"onCallLoad","(Z)V");
     jm_timeinfo = jev->GetMethodID(jcz,"onCallTimeInfo","(II)V");
     jm_error = jev->GetMethodID(jcz,"onCallError","(ILjava/lang/String;)V");
     jm_complete = jev->GetMethodID(jcz,"onCallComplete","()V");
+    jm_valuedb = jev->GetMethodID(jcz,"onCallValueDB","(I)V");
+    jm_pcmtoaac = jev->GetMethodID(jcz,"encodePcmToAAC","(I[B)V");
+    jm_pcminfo = jev->GetMethodID(jcz,"onCallPcmInfo","([BI)V");
+    jm_pcmsamplerate = jev->GetMethodID(jcz,"onCallPcmRate","(I)V");
+    jm_rendereryuv = jev->GetMethodID(jcz,"onCallRendererYUV","(II[B[B[B)V");
 }
 
-YXCallJava::~YXCallJava() {
-
-}
+YXCallJava::~YXCallJava() {}
 
 void YXCallJava::onCallPrepared(int threadType) {
    switch (threadType){
@@ -129,4 +131,98 @@ void YXCallJava::onCallComplete(int threadType) {
             jvm->DetachCurrentThread();
             break;
     }
+}
+
+void YXCallJava::onCallValueDB(int threadType, int db) {
+    switch (threadType){
+        case MAIN_THREAD:
+            jev->CallVoidMethod(jobj,jm_valuedb,db);
+            break;
+        case CHILD_THREAD:
+            JNIEnv *ev;
+            if(jvm->AttachCurrentThread(&ev,0)!=JNI_OK){
+                if(LOG_DEBUG){
+                    LOGE("get child thread jnienv wrong");
+                }
+                return;
+            }
+            ev->CallVoidMethod(jobj,jm_valuedb,db);
+            jvm->DetachCurrentThread();
+            break;
+    }
+}
+
+void YXCallJava::onCallPcmToAAC(int threadType, int size, void *buffer) {
+    switch (threadType){
+        case MAIN_THREAD: {
+            jbyteArray jbuffer = jev->NewByteArray(size);
+            jev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+            jev->CallVoidMethod(jobj, jm_pcmtoaac, size, jbuffer);
+            jev->DeleteLocalRef(jbuffer);
+        }
+            break;
+        case CHILD_THREAD: {
+            JNIEnv *ev;
+            if (jvm->AttachCurrentThread(&ev, 0) != JNI_OK) {
+                if (LOG_DEBUG) {
+                    LOGE("get child thread jnienv wrong");
+                }
+                return;
+            }
+            jbyteArray jbuffer = ev->NewByteArray(size);
+            ev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+            ev->CallVoidMethod(jobj, jm_pcmtoaac, size, jbuffer);
+            ev->DeleteLocalRef(jbuffer);
+            jvm->DetachCurrentThread();
+        }
+            break;
+    }
+}
+
+void YXCallJava::onCallPcmInfo(void *buffer, int size) {
+    JNIEnv *ev;
+    if (jvm->AttachCurrentThread(&ev, 0) != JNI_OK) {
+        if (LOG_DEBUG) {
+            LOGE("get child thread jnienv wrong");
+        }
+        return;
+    }
+    jbyteArray jbuffer = ev->NewByteArray(size);
+    ev->SetByteArrayRegion(jbuffer, 0, size, static_cast<const jbyte *>(buffer));
+    ev->CallVoidMethod(jobj, jm_pcminfo, jbuffer, size);
+    ev->DeleteLocalRef(jbuffer);
+    jvm->DetachCurrentThread();
+}
+
+void YXCallJava::onCallPcmRate(int samplerate) {
+    JNIEnv *ev;
+    if(jvm->AttachCurrentThread(&ev,0)!=JNI_OK){
+        if(LOG_DEBUG){
+            LOGE("get child thread jnienv wrong");
+        }
+        return;
+    }
+    ev->CallVoidMethod(jobj,jm_pcmsamplerate,samplerate);
+    jvm->DetachCurrentThread();
+}
+
+void YXCallJava::onCallRendererYUV(int width, int height, uint8_t *fy, uint8_t *fu, uint8_t *fv) {
+    JNIEnv *ev;
+    if(jvm->AttachCurrentThread(&ev,0)!=JNI_OK){
+        if(LOG_DEBUG){
+            LOGE("get child thread jnienv wrong");
+        }
+        return;
+    }
+    jbyteArray y = ev->NewByteArray(width * height);
+    ev->SetByteArrayRegion(y,0,width * height, reinterpret_cast<const jbyte *>(fy));
+    jbyteArray u = ev->NewByteArray(width * height / 4);
+    ev->SetByteArrayRegion(u,0,width * height / 4, reinterpret_cast<const jbyte *>(fu));
+    jbyteArray v = ev->NewByteArray(width * height / 4);
+    ev->SetByteArrayRegion(v,0,width * height / 4, reinterpret_cast<const jbyte *>(fv));
+    ev->CallVoidMethod(jobj,jm_rendereryuv,width,height,y,u,v);
+    ev->DeleteLocalRef(y);
+    ev->DeleteLocalRef(u);
+    ev->DeleteLocalRef(v);
+    jvm->DetachCurrentThread();
 }

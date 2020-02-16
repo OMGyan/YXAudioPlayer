@@ -9,6 +9,8 @@
 #include "YXPlayStatus.h"
 #include "YXCallJava.h"
 #include "SoundTouch.h"
+#include "YXBufferQueue.h"
+#include "YXPcmBean.h"
 
 using namespace soundtouch;
 
@@ -16,6 +18,7 @@ using namespace soundtouch;
 extern "C"{
 #include <libavcodec/avcodec.h>
 #include <libswresample/swresample.h>
+#include <libavutil/time.h>
 };
 
 extern "C" {
@@ -75,6 +78,15 @@ public:
     uint8_t *out_buffer = NULL;
     int nb = 0;
     int num = 0;
+    bool isRecord = false;
+    bool readFrameFinished = true;
+    bool isCut = false;
+    int end_time = 0;
+    bool showPcm = false;
+
+    pthread_t pcmCallBackThread;
+    YXBufferQueue *bufferQueue;
+    int defaultPcmSize = 4096;
 
 public:
     YXAudio(YXPlayStatus *yxPlayStatus,int sample_rate,YXCallJava *yxcj);
@@ -93,6 +105,10 @@ public:
     int getSoundTouchData();
     void setPitch(float pitch);
     void setSpeed(float speed);
+    //计算pcm数据的分贝值(声音的振幅)
+    int getPCMDB(char *pcmdata,size_t pcmsize);
+
+    void startStopRecord(bool start);
 };
 
 

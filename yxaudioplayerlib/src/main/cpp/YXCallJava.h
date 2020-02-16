@@ -25,6 +25,7 @@
 class YXCallJava {
 
 public:
+
     JavaVM *jvm;
     JNIEnv *jev;
     jobject jobj;
@@ -33,8 +34,14 @@ public:
     jmethodID jm_timeinfo;
     jmethodID jm_error;
     jmethodID jm_complete;
+    jmethodID jm_valuedb;
+    jmethodID jm_pcmtoaac;
+    jmethodID jm_pcminfo;
+    jmethodID jm_pcmsamplerate;
+    jmethodID jm_rendereryuv;
 
 public:
+
     YXCallJava(JavaVM *vm,JNIEnv *jniEnv,jobject job);
     ~YXCallJava();
     void onCallPrepared(int threadType);
@@ -42,6 +49,12 @@ public:
     void onCallTimeInfo(int threadType,int curr,int total);
     void onCallError(int threadType,int code,const char *msg);
     void onCallComplete(int threadType);
+    void onCallValueDB(int threadType,int db);
+    void onCallPcmToAAC(int threadType,int size, void *buffer);
+    void onCallPcmInfo(void *buffer,int size);
+    void onCallPcmRate(int samplerate);
+    void onCallRendererYUV(int width,int height,uint8_t *fy,uint8_t *fu,uint8_t *fv);
+
 };
 
 
